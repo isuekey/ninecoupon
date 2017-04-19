@@ -22,7 +22,7 @@
 
 ### src ###
   * app.js 管理应用特性
-  * system.js 管理公众号服务环境：服务器配置，授权等
+  * app_system.js 管理公众号服务环境：服务器配置，授权等
   * coupon/\*.js 管理发券相关
   * business/\*.js 管理子商户相关
   * customer/\*.js 处理用户相关
