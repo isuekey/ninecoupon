@@ -1,28 +1,22 @@
 {
   "name": "ninecoupon",
-  "version": "1.0.0",
-  "description": "微信优惠券发放",
-  "main": "server.js",
-  "scripts": {
-    "test": "npm test",
-    "start": "node server.js"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/isuekey/ninecouponServer.git"
-  },
-  "keywords": [
-    "coupon",
-    "weixin"
-  ],
+  "version": "0.0.1",
+  "private": true,
+  "description": "New Swagger API Project",
+  "keywords": [],
   "author": "",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/isuekey/ninecouponServer/issues"
-  },
-  "homepage": "https://github.com/isuekey/ninecouponServer#readme",
+  "license": "",
+  "main": "app.js",
   "dependencies": {
-    "http": "0.0.0",
-    "jasmine": "^2.5.3"
+    "express": "^4.12.3",
+    "swagger-express-mw": "^0.1.0"
+  },
+  "devDependencies": {
+    "should": "^7.1.0",
+    "supertest": "^1.0.0"
+  },
+  "scripts": {
+    "start": "node app.js",
+    "test": "swagger project test"
   }
 }
