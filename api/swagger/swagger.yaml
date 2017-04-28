@@ -435,7 +435,7 @@ definitions:
       promoter:
         type: integer
         description: business promoter
-      type:
+      accountType:
         description: Account type in the app
         enum:
           - customer

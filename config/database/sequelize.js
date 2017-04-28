@@ -1,6 +1,7 @@
 var Sequelize = require('sequelize');
 
-var sequelize = new Sequelize('postgres://ninecoupon:ninecoupon@127.0.0.1:5432/ninecoupon', {
+var sequelize = new Sequelize('ninecoupon', 'ninecoupon', 'ninecoupon', {
+    host:"localhost",
     logging: true,
     define: {
         freezeTableName: true,
@@ -11,3 +12,4 @@ var sequelize = new Sequelize('postgres://ninecoupon:ninecoupon@127.0.0.1:5432/n
 });
 
 exports.sequelize = sequelize;
+exports.Sequelize = Sequelize;
