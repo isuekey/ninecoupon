@@ -104,12 +104,27 @@ var DomainCouponTemplate = sequelize.define("t_coupon_template", {
         type:Sequelize.STRING
     },
     createAt:{
-        type:Sequelize.DATA,
+        type:Sequelize.DATE,
         field:"create_at"
     }
 });
 DomainCategory.hasMany(DomainCouponTemplate, { constraints: false});
 DomainCouponTemplate.belongsTo(DomainCategory);
+DomainCouponTemplate.queryCouponTemplate = function queryCouponTemplate(templateStatus, templateType, templateOrigin){
+    var where = {};
+    if(templateStatus){
+        where.status = templateStatus;
+    };
+    if(templateType){
+        where.type = templateType;
+    };
+    if(templateOrigin){
+        where.origin = templateOrigin;
+    };
+    return this.findAll({
+        where
+    });
+};
 
 var DomainCouponTemplateInstance = sequelize.define("t_coupon_template_instance", {
     name:{
@@ -134,7 +149,7 @@ var DomainCouponTemplateInstance = sequelize.define("t_coupon_template_instance"
         field:"brand_id"
     },
     createAt:{
-        type:Sequelize.DATA,
+        type:Sequelize.DATE,
         field:"create_at"
     }
 });
@@ -158,7 +173,7 @@ var DomainCouponInstance = sequelize.define("t_coupon_instance", {
         field:"organization_id"
     },
     createAt:{
-        type:Sequelize.DATA,
+        type:Sequelize.DATE,
         field:"create_at"
     }
 });
@@ -181,15 +196,15 @@ var DomainCouponConsumption = sequelize.define("t_coupon_consumption", {
         field:"account_clerk_id"
     },
     latitude:{
-        type:Sequelize.Double,
+        type:Sequelize.DOUBLE,
         field:"latitude"
     },
     longitude:{
-        type:Sequelize.Double,
+        type:Sequelize.DOUBLE,
         field:"longitude"
     },
     createAt:{
-        type:Sequelize.DATA,
+        type:Sequelize.DATE,
         field:"create_at"
     }
 });
@@ -197,3 +212,5 @@ var DomainCouponConsumption = sequelize.define("t_coupon_consumption", {
 
 //exports.Visitor = Visitor;
 exports.DomainAccount = DomainAccount;
+
+exports.DomainCouponTemplate = DomainCouponTemplate;

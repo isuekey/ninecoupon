@@ -3,6 +3,7 @@
  用于处理优惠券模版
 **/
 var util = require("util");
+var DomainCouponTemplate = require("../models/data_define").DomainCouponTemplate;
 
 module.exports = {
     getAllCouponTemplate: getAllCouponTemplate,
@@ -17,9 +18,8 @@ function getAllCouponTemplate(req, res){
     var status = req.swagger.params.status.value;
     var type = req.swagger.params.type.value;
     var origin = req.swagger.params.origin.value;
-    var couponTemplate = util.format('status:%s, type:%s, origin:%s', status, type, origin);
-    console.log(couponTemplate);
-    res.json(couponTemplate);
+    var templateList = DomainCouponTemplate.queryCouponTemplate(status, type, origin);
+    res.json({templateList});
 }
 
 function createCouponTemplate(req, res){
