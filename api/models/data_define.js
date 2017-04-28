@@ -197,5 +197,3 @@ var DomainCouponConsumption = sequelize.define("t_coupon_consumption", {
 
 //exports.Visitor = Visitor;
 exports.DomainAccount = DomainAccount;
-
-

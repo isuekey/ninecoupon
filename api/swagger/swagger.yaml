@@ -447,13 +447,13 @@ definitions:
     required:
       - id
       - phone
-      - type
+      - accountType
   newAccount:
     allOf:
       - $ref: '#/definitions/Account'
     required:
       - phone
-      - type
+      - accountType
   Brand:
     properties:
       id:
