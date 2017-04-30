@@ -32,6 +32,62 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
+  /account/signup:
+    x-swagger-router-controller: account
+    post:
+      description: create an account
+      operationId: createAccount
+      parameters:
+        - name: account
+          in: body
+          description: Which will be created
+          required: true
+          schema:
+            $ref: '#/definitions/newAccount'
+      responses:
+        '200':
+          description: Account create
+        default:
+          description: unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  /account/signin:
+    x-swagger-router-controller: account
+    post:
+      description: login an account
+      operationId: loginAccount
+      parameters:
+        - name: account
+          in: body
+          description: account
+          required: true
+          schema:
+            $ref: '#/definitions/Login'
+      responses:
+        '200':
+          description: Account sign in
+        default:
+          description: unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  '/account/status/{accountPhone}':
+    x-swagger-router-controller: account
+    get:
+      description: create an account
+      operationId: findTheCountByPhone
+      parameters:
+        - name: accountPhone
+          in: path
+          description: account phone key
+          required: true
+          type: string
+      responses:
+        '200':
+          description: The phone exist
+        default:
+          description: unexpected error
+          schema:
+            $ref: '#/definitions/Error'
   /coupon/template:
     x-swagger-router-controller: coupon_template
     get:
@@ -205,7 +261,7 @@ paths:
   '/coupon/instance/{appUserId}':
     x-swagger-router-controller: coupon_instance
     get:
-      description: get the coupon of the user
+      description: get the nine coupons for the user
       operationId: getCouponOfUser
       parameters:
         - name: appUserId
@@ -263,7 +319,7 @@ paths:
           schema:
             type: array
             items:
-              $ref: '#/definitions/CouponInstance'
+              $ref: '#/definitions/CouponConsumption'
         default:
           description: Unexpected error
           schema:
@@ -289,65 +345,9 @@ paths:
           schema:
             type: array
             items:
-              $ref: '#/definitions/CouponInstance'
+              $ref: '#/definitions/CouponConsumption'
         default:
           description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-  /account/signup:
-    x-swagger-router-controller: account
-    post:
-      description: create an account
-      operationId: createAccount
-      parameters:
-        - name: account
-          in: body
-          description: Which will be created
-          required: true
-          schema:
-            $ref: '#/definitions/newAccount'
-      responses:
-        '200':
-          description: Account create
-        default:
-          description: unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-  /account/signin:
-    x-swagger-router-controller: account
-    post:
-      description: login an account
-      operationId: loginAccount
-      parameters:
-        - name: account
-          in: body
-          description: account
-          required: true
-          schema:
-            $ref: '#/definitions/Login'
-      responses:
-        '200':
-          description: Account sign in
-        default:
-          description: unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-  '/account/status/{accountPhone}':
-    x-swagger-router-controller: account
-    get:
-      description: create an account
-      operationId: findTheCountByPhone
-      parameters:
-        - name: accountPhone
-          in: path
-          description: account phone key
-          required: true
-          type: string
-      responses:
-        '200':
-          description: The phone exist
-        default:
-          description: unexpected error
           schema:
             $ref: '#/definitions/Error'
   /swagger:
@@ -535,6 +535,8 @@ definitions:
       - name
       - data
   CouponTemplateResponse:
+    allOf:
+      - $ref: "#/definitions/SuccessJsonResponse"
     properties:
       templateList:
         type: array
@@ -660,6 +662,9 @@ definitions:
     properties:
       message:
         type: string
+      code:
+        type: integer
+        format: int32
     required:
       - message
   ErrorResponse:

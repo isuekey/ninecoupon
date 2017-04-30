@@ -18,9 +18,26 @@ function getAllCouponTemplate(req, res){
     var status = req.swagger.params.status.value;
     var type = req.swagger.params.type.value;
     var origin = req.swagger.params.origin.value;
-    var templateList = DomainCouponTemplate.queryCouponTemplate(status, type, origin);
-    res.json({templateList});
+    DomainCouponTemplate
+        .queryCouponTemplate(status, type, origin)
+        .then((templateList)=>{
+            console.log(`tmeplateList:${templateList}`);
+            res.json({templateList});
+        });
 }
 
 function createCouponTemplate(req, res){
+    var newCouponTemplate = req.swagger.params.couponTemplate.value;
+    DomainCouponTemplate
+        .createCouponTemplate(newCouponTemplate)
+        .then( (couponTemplate, created) =>{
+            if(created){
+                res.json(couponTemplate);
+            }else{
+                res.status(255).json({
+                    code:10010001,
+                    message:"has the template"
+                });
+            }
+        });
 }

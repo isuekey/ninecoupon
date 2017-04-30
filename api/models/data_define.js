@@ -3,33 +3,63 @@ var sequelize = require('../../config/database/sequelize').sequelize;
 
 
 var DomainAccount = sequelize.define('t_account', {
-    name:{
+    account:{
         type:Sequelize.STRING
+    },
+    accountName:{
+        type:Sequelize.STRING,
+        field:"account_name"
     },
     phone:{
         type:Sequelize.STRING
     },
     gender:{
-        type:Sequelize.STRING
+        type:Sequelize.INTEGER
     },
     avatar:{
         type:Sequelize.STRING
     },
+    password:{
+        type:Sequelize.STRING
+    },
     createAt:{
         type:Sequelize.DATE,
-        field:"create_at"
+        field:"created_at"
     },
     status:{
         type:Sequelize.STRING
     },
     promoter:{
-        type:Sequelize.STRING
+        type:Sequelize.INTEGER
     },
     accountType:{
         type:Sequelize.STRING,
         field:"account_type"
     }
 });
+DomainAccount.signUpAccount = function signUpAccount(newAccount){
+    return this.findOrCreate({
+        where:{
+            phone:newAccount.phone
+        },
+        defaults: newAccount
+    });
+};
+DomainAccount.signInAccount = function signInAccount(login){
+    return this.findOne({
+        where:{
+            account:login.account,
+            password:login.password
+        }
+    });
+};
+DomainAccount.testPhoneExist = function testPhoneExist(phone){
+    return this.findOne({
+        where:{
+            phone:phone
+        }
+    });
+};
 
 var DomainBrand = sequelize.define('t_brand', {
     name:{
@@ -95,7 +125,7 @@ var DomainCouponTemplate = sequelize.define("t_coupon_template", {
         type:Sequelize.STRING
     },
     data:{
-        type:Sequelize.STRING
+        type:Sequelize.JSON
     },
     status:{
         type:Sequelize.STRING
@@ -105,7 +135,7 @@ var DomainCouponTemplate = sequelize.define("t_coupon_template", {
     },
     createAt:{
         type:Sequelize.DATE,
-        field:"create_at"
+        field:"created_at"
     }
 });
 DomainCategory.hasMany(DomainCouponTemplate, { constraints: false});
@@ -124,6 +154,18 @@ DomainCouponTemplate.queryCouponTemplate = function queryCouponTemplate(template
     return this.findAll({
         where
     });
+};
+DomainCouponTemplate.createCouponTemplate = function createCouponTemplate(newCouponTemplate){
+    return this.findOrCreate({
+        where:{
+            name:newCouponTemplate.name,
+            data:newCouponTemplate.data
+        },
+        defaults: newCouponTemplate
+    });
+};
+DomainCouponTemplate.findCouponTemplateById = function findCouponTemplateById(couponTemplateId){
+    return this.findById(couponTemplateId);
 };
 
 var DomainCouponTemplateInstance = sequelize.define("t_coupon_template_instance", {
@@ -153,6 +195,25 @@ var DomainCouponTemplateInstance = sequelize.define("t_coupon_template_instance"
         field:"create_at"
     }
 });
+DomainCouponTemplateInstance.queryCouponTemplateInstance = function queryCouponTemplateInstance(){
+    return this.findAll();
+};
+DomainCouponTemplateInstance.createCouponTemplateInstance = function createCouponTemplateInstance(newCouponTemplateInstance){
+    return this.findOrCreate({
+        where:{
+            name:newCouponTemplateInstance.name,
+            data:newCouponTemplateInstance.data,
+            brandId:newCouponTemplateInstance.brandId
+        },
+        defaults: newCouponTemplateInstance
+    });
+};
+DomainCouponTemplateInstance.deleteCouponTemplateInstance = function deleteCouponTemplateInstance(couponTemplateInstanceId){
+    return this.update({ status:"disabled" }, { where:{ id: couponTemplateInstanceId } });
+};
+DomainCouponTemplateInstance.getCouponTemplateInstanceById = function getCouponTemplateInstanceById(couponTemplateInstanceId){
+    return this.findById(couponTemplateInstanceId);
+};
 
 var DomainCouponInstance = sequelize.define("t_coupon_instance", {
     name:{
@@ -168,7 +229,7 @@ var DomainCouponInstance = sequelize.define("t_coupon_instance", {
         type:Sequelize.INTEGER,
         field:"coupon_template_instance_id"
     },
-    oranizationId:{
+    organizationId:{
         type:Sequelize.INTEGER,
         field:"organization_id"
     },
@@ -177,7 +238,15 @@ var DomainCouponInstance = sequelize.define("t_coupon_instance", {
         field:"create_at"
     }
 });
-
+DomainCouponInstance.createCouponInstanceFromTemplate = function createCouponInstanceFromTemplate(newCouponTemplateInstance){
+    //TODO 根据模版实例创建优惠券
+};
+DomainCouponInstance.queryNineCouponInstanceForUser = function queryNineCouponInstanceForUser(appUserId){
+    //TODO 给某个用户获取九张优惠券
+};
+DomainCouponInstance.takeOffTheCouponInstance = function takeOffTheCouponInstance(appUserId, couponInstance){
+    //TODO 用户领取优惠券
+};
 var DomainCouponConsumption = sequelize.define("t_coupon_consumption", {
     couponInstanceId:{
         type:Sequelize.INTEGER,
@@ -208,9 +277,12 @@ var DomainCouponConsumption = sequelize.define("t_coupon_consumption", {
         field:"create_at"
     }
 });
-
+DomainCouponConsumption.queryCouponInstanceOfUser = function queryCouponInstanceOfUser(appUserId){
+    //TODO 获取用户现有的优惠券的状态
+};
 
 //exports.Visitor = Visitor;
 exports.DomainAccount = DomainAccount;
 
 exports.DomainCouponTemplate = DomainCouponTemplate;
+
