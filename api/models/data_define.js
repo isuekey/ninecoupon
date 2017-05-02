@@ -306,16 +306,28 @@ var DomainCouponConsumption = sequelize.define("t_coupon_consumption", {
         field:"created_at"
     }
 });
+DomainCouponConsumption.belongsTo(DomainAccount, {
+    foreignKey:"account_consumer_id" ,
+    as: "consumerAccount"
+});
+DomainCouponConsumption.belongsTo(DomainAccount, {
+    foreignKey:"account_clerk_id" ,
+    as:"clerkAccount"
+});
+DomainCouponConsumption.hasOne(DomainCouponInstance, {
+    foreignKey:"coupon_instance_id" ,
+    as:"couponInstance"
+});
 DomainCouponConsumption.writeOffTheCouponInstance = function writeOffTheCouponInstance(couponInstanceId, couponDetail){
     let defaultValue = {
-        "coupon_instance_id": couponInstanceId,
-        "account_clerk_id": couponDetail.clerk.id
+        "couponInstanceId": couponInstanceId,
+        "clerkId": couponDetail.clerk.id
     };
     return this.findOrCreate({
         where:{
             "coupon_instance_id":couponInstanceId
         },
-        defaults: couponDetail
+        defaults: defaultValue
     });
 };
 DomainCouponConsumption.queryCouponInstanceOfUser = function queryCouponInstanceOfUser(appUserId){
@@ -324,10 +336,11 @@ DomainCouponConsumption.queryCouponInstanceOfUser = function queryCouponInstance
 DomainCouponConsumption.queryCoupontWritenOffByTheUser = function queryCoupontWritenOffByTheUser(appClerkId){
     return this.findAll({
         where:{
-            "account_clerk_id": appClerkId
+            "clerkId": appClerkId
         }
     });
 };
+
 
 //exports.Visitor = Visitor;
 exports.DomainAccount = DomainAccount;
