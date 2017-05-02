@@ -47,6 +47,8 @@ paths:
       responses:
         '200':
           description: Account create
+          schema:
+            $ref: '#/definitions/SuccessAccountResponse'
         default:
           description: unexpected error
           schema:
@@ -66,6 +68,8 @@ paths:
       responses:
         '200':
           description: Account sign in
+          schema:
+            $ref: '#/definitions/SuccessAccountResponse'
         default:
           description: unexpected error
           schema:
@@ -185,6 +189,10 @@ paths:
           description: Coupon template instance response
           schema:
             $ref: '#/definitions/CouponTemplateInstance'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
     post:
       tags:
         - Coupon Template Instance Operations
@@ -250,10 +258,12 @@ paths:
           description: The coupon template instance
           required: true
           schema:
-            $ref: '#/definitions/newCouponTemplateInstance'
+            $ref: '#/definitions/CouponTemplateInstance'
       responses:
         '200':
           description: create coupon instance
+          schema:
+            $ref: "#/definitions/SuccessJsonResponse"
         default:
           description: unexpected error
           schema:
@@ -298,6 +308,8 @@ paths:
       responses:
         '200':
           description: Coupon is received
+          schema:
+            $ref: "#/definitions/SuccessJsonResponse"
         default:
           description: Unexpected error
           schema:
@@ -343,13 +355,32 @@ paths:
         '200':
           description: Coupon template response
           schema:
+            $ref: '#/definitions/CouponConsumption'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  '/coupon/instance/{clerkUserId}/writeoff':
+    x-swagger-router-controller: coupon_instance
+    get:
+      description: the list of the copon which the user write off 
+      operationId: getTheCouponListOfTheClerk
+      parameters:
+        - name: clerkUserId
+          in: path
+          required: true
+          type: string
+      responses:
+        "200" :
+          description: Coupon template response
+          schema:
             type: array
             items:
               $ref: '#/definitions/CouponConsumption'
         default:
           description: Unexpected error
           schema:
-            $ref: '#/definitions/Error'
+            $ref: '#/definitions/Error'          
   /swagger:
     x-swagger-pipe: swagger_raw
 # complex objects have schema definitions
@@ -366,7 +397,9 @@ definitions:
         description: unique identifier for brand
         format: int64
         type: integer
-      name:
+      account:
+        type: string
+      accountName:
         type: string
       phone:
         type: string
@@ -375,8 +408,7 @@ definitions:
       avatar:
         type: string
       createAt:
-        type: integer
-        format: int64
+        type: string
       status:
         description: Account status in the app
         enum:
@@ -393,6 +425,7 @@ definitions:
           - customer
           - clerk
           - merchant
+          - brand
           - market
           - admin
         type: string
@@ -406,6 +439,12 @@ definitions:
     required:
       - phone
       - accountType
+  SuccessAccountResponse:
+    allOf:
+      - $ref: '#/definitions/SuccessJsonResponse'
+    properties:
+      account:
+        $ref: "#/definitions/Account"
   Brand:
     properties:
       id:
@@ -507,6 +546,17 @@ definitions:
         type: integer
       name:
         type: string
+  CouponData:
+    properties:
+      name:
+        type: string
+      count:
+        type: integer
+      brandName:
+        type: string
+      discount:
+        type: number
+        format: double
   CouponTemplate:
     properties:
       category:
@@ -517,7 +567,7 @@ definitions:
       name:
         type: string
       data:
-        type: string
+        $ref: '#/definitions/CouponData'
       status:
         type: string
         enum:
@@ -558,7 +608,7 @@ definitions:
       name:
         type: string
       data:
-        type: string
+        $ref: '#/definitions/CouponData'
       status:
         type: string
         enum:
@@ -599,7 +649,7 @@ definitions:
       name:
         type: string
       data:
-        type: string
+        $ref: '#/definitions/CouponData'
       status:
         type: string
         enum:
@@ -613,7 +663,6 @@ definitions:
       - id
       - name
       - data
-      - templateInstance
   newCouponInstance:
     allOf:
       - $ref: '#/definitions/CouponInstance'
@@ -624,7 +673,7 @@ definitions:
   CouponConsumption:
     properties:
       id:
-        description: unique identifier for Shop
+        description: unique identifier for consumption
         format: int64
         type: integer
       couponInstance:
@@ -639,15 +688,12 @@ definitions:
       location:
         $ref: '#/definitions/Location'
     required:
-      - id
       - couponInstance
-      - consumer
   newCouponConsumption:
     allOf:
       - $ref: '#/definitions/CouponConsumption'
     required:
       - couponInstance
-      - consumer
   Error:
     required:
       - message

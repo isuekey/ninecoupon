@@ -170,7 +170,8 @@ DomainCouponTemplate.findCouponTemplateById = function findCouponTemplateById(co
 
 var DomainCouponTemplateInstance = sequelize.define("t_coupon_template_instance", {
     name:{
-        type:Sequelize.STRING
+        type:Sequelize.STRING,
+        field:"coupon_template_instance_name"
     },
     data:{
         type:Sequelize.STRING
@@ -184,7 +185,7 @@ var DomainCouponTemplateInstance = sequelize.define("t_coupon_template_instance"
     },
     templateId:{
         type:Sequelize.INTEGER,
-        field:"coupon_template_id"
+        field:"template_id"
     },
     brandId:{
         type:Sequelize.INTEGER,
@@ -192,7 +193,7 @@ var DomainCouponTemplateInstance = sequelize.define("t_coupon_template_instance"
     },
     createAt:{
         type:Sequelize.DATE,
-        field:"create_at"
+        field:"created_at"
     }
 });
 DomainCouponTemplateInstance.queryCouponTemplateInstance = function queryCouponTemplateInstance(){
@@ -216,18 +217,24 @@ DomainCouponTemplateInstance.getCouponTemplateInstanceById = function getCouponT
 };
 
 var DomainCouponInstance = sequelize.define("t_coupon_instance", {
+    id:{
+        type:Sequelize.INTEGER,
+        primaryKey:true,
+        field:"id"
+    },
     name:{
-        type:Sequelize.STRING
+        type:Sequelize.STRING,
+        field:'coupon_instance_name'
     },
     data:{
-        type:Sequelize.STRING
+        type:Sequelize.JSON
     },
     status:{
         type:Sequelize.STRING
     },
     templateInstanceId:{
         type:Sequelize.INTEGER,
-        field:"coupon_template_instance_id"
+        field:"template_instance_id"
     },
     organizationId:{
         type:Sequelize.INTEGER,
@@ -235,17 +242,39 @@ var DomainCouponInstance = sequelize.define("t_coupon_instance", {
     },
     createAt:{
         type:Sequelize.DATE,
-        field:"create_at"
+        field:"created_at"
     }
 });
-DomainCouponInstance.createCouponInstanceFromTemplate = function createCouponInstanceFromTemplate(newCouponTemplateInstance){
+DomainCouponInstance.createCouponInstanceFromTemplate = function createCouponInstanceFromTemplate(couponTemplateInstance){
     //TODO 根据模版实例创建优惠券
+    console.log(couponTemplateInstance);
+    let records = [];
+    let data = couponTemplateInstance.data;
+    let counts = couponTemplateInstance.data.count;
+    for (let index = 0; index < counts; ++index){
+        records.push({
+            name: couponTemplateInstance.name,
+            data : data,
+            status: 'enabled',
+            templateInstanceId: couponTemplateInstance.id
+        });
+    };
+    console.log(records);
+    return this
+        .bulkCreate(records, {
+            fields:['name', 'data', 'status', 'templateInstanceId']
+        });
+    
 };
 DomainCouponInstance.queryNineCouponInstanceForUser = function queryNineCouponInstanceForUser(appUserId){
     //TODO 给某个用户获取九张优惠券
+    return this.findAll({
+        limit:9
+    });
 };
 DomainCouponInstance.takeOffTheCouponInstance = function takeOffTheCouponInstance(appUserId, couponInstance){
     //TODO 用户领取优惠券
+    return this.findAll({});
 };
 var DomainCouponConsumption = sequelize.define("t_coupon_consumption", {
     couponInstanceId:{
@@ -274,11 +303,30 @@ var DomainCouponConsumption = sequelize.define("t_coupon_consumption", {
     },
     createAt:{
         type:Sequelize.DATE,
-        field:"create_at"
+        field:"created_at"
     }
 });
+DomainCouponConsumption.writeOffTheCouponInstance = function writeOffTheCouponInstance(couponInstanceId, couponDetail){
+    let defaultValue = {
+        "coupon_instance_id": couponInstanceId,
+        "account_clerk_id": couponDetail.clerk.id
+    };
+    return this.findOrCreate({
+        where:{
+            "coupon_instance_id":couponInstanceId
+        },
+        defaults: couponDetail
+    });
+};
 DomainCouponConsumption.queryCouponInstanceOfUser = function queryCouponInstanceOfUser(appUserId){
     //TODO 获取用户现有的优惠券的状态
+};
+DomainCouponConsumption.queryCoupontWritenOffByTheUser = function queryCoupontWritenOffByTheUser(appClerkId){
+    return this.findAll({
+        where:{
+            "account_clerk_id": appClerkId
+        }
+    });
 };
 
 //exports.Visitor = Visitor;
@@ -286,3 +334,6 @@ exports.DomainAccount = DomainAccount;
 
 exports.DomainCouponTemplate = DomainCouponTemplate;
 
+exports.DomainCouponInstance = DomainCouponInstance;
+
+exports.DomainCouponConsumption = DomainCouponConsumption;
