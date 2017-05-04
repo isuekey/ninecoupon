@@ -15,23 +15,6 @@ schemes:
 consumes:
   - application/json
 paths:
-  /hello:
-    x-swagger-router-controller: hello_world
-    get:
-      operationId: hello
-      parameters:
-        - name: name
-          in: query
-          type: string
-      responses:
-        '200':
-          description: hello the user
-          schema:
-            $ref: '#/definitions/SuccessJsonResponse'
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
   /account/signup:
     x-swagger-router-controller: account
     post:
@@ -48,7 +31,7 @@ paths:
         '200':
           description: Account create
           schema:
-            $ref: '#/definitions/SuccessAccountResponse'
+            $ref: '#/definitions/SuccessTokenResponse'
         default:
           description: unexpected error
           schema:
@@ -69,7 +52,7 @@ paths:
         '200':
           description: Account sign in
           schema:
-            $ref: '#/definitions/SuccessAccountResponse'
+            $ref: '#/definitions/SuccessTokenResponse'
         default:
           description: unexpected error
           schema:
@@ -446,8 +429,6 @@ definitions:
         type: integer
       avatar:
         type: string
-      createAt:
-        type: string
       status:
         description: Account status in the app
         enum:
@@ -468,6 +449,12 @@ definitions:
           - market
           - admin
         type: string
+      created_at: 
+        type: string
+        format: date-time
+      updated_at: 
+        type: string
+        format: date-time
     required:
       - id
       - phone
@@ -752,6 +739,24 @@ definitions:
         format: int32
     required:
       - message
+  SuccessTokenResponse:
+    properties:
+      message:
+        type: string
+      code:
+        type: integer
+        format: int32
+      token: 
+        type: string
+      refresh:
+        type: string
+      effective:
+        type: integer
+        format: int32
+      account:
+        $ref: '#/definitions/Account'
+    required:
+      - code
   ErrorResponse:
     required:
       - message
@@ -771,6 +776,7 @@ produces:
 securityDefinitions:
   oauth2:
     type: oauth2
+    description: nine coupon oauth2 summary
     scopes:
       read: Read access
       write: Write access

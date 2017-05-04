@@ -15,29 +15,45 @@ module.exports = {
 **/
 function loginAccount(req, res){
     var login = req.swagger.params.account.value;
+    let result = {
+        code: 1000,
+        message: "not give the correct params"
+    };
+    if(!login || !(login.account || login.password)){
+        res.status(200);
+        res.json(result)
+        return;
+    };
     DomainAccount
         .signInAccount(login)
         .then((accountInfo)=>{
-            console.log(`accountInfo:${ JSON.stringify(accountInfo)}`);
-            let info = JSON.parse(JSON.stringify(accountInfo));
-            let accountOut = {};
-            for(var key in info){
-                if(info[key]){
-                    console.log(`accountInfo.${key} : ${info[key]}`);
-                    accountOut[key] = accountInfo[key];
-                };
-            }
-            delete(accountOut.created_at);
-            delete(accountOut.updated_at);
             res.status(200);
-            let result = {
-                code: 200,
-                message:"ok",
-                account: accountOut
+            if(accountInfo){
+                let info = JSON.parse(JSON.stringify(accountInfo));
+                let accountOut = {};
+                for(var key in info){
+                    if(info[key]){
+                        accountOut[key] = accountInfo[key];
+                    };
+                }
+                accountOut.id = parseInt(accountOut.id);
+                result = {
+                    code: 0,
+                    account: accountOut,
+                    message: 'found an active user',
+                    token:'token',
+                    refresh:'refresh_token',
+                    effective: 30
+                };
+            }else{
+                result = {
+                    code: 1001,
+                    message: "not found the user"
+                };
             };
-            accountOut.id = parseInt(accountOut.id);
-            console.log(`account out: ${ JSON.stringify(accountOut)}`);
             res.json(result);
+        }, (error)=>{
+            console.log(`request:${req} \n response:${res}`);
         });
 }
 
