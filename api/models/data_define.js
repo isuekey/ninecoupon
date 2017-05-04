@@ -306,18 +306,6 @@ var DomainCouponConsumption = sequelize.define("t_coupon_consumption", {
         field:"created_at"
     }
 });
-DomainCouponConsumption.belongsTo(DomainAccount, {
-    foreignKey:"account_consumer_id" ,
-    as: "consumerAccount"
-});
-DomainCouponConsumption.belongsTo(DomainAccount, {
-    foreignKey:"account_clerk_id" ,
-    as:"clerkAccount"
-});
-DomainCouponConsumption.hasOne(DomainCouponInstance, {
-    foreignKey:"coupon_instance_id" ,
-    as:"couponInstance"
-});
 DomainCouponConsumption.writeOffTheCouponInstance = function writeOffTheCouponInstance(couponInstanceId, couponDetail){
     let defaultValue = {
         "couponInstanceId": couponInstanceId,
@@ -334,11 +322,37 @@ DomainCouponConsumption.queryCouponInstanceOfUser = function queryCouponInstance
     //TODO 获取用户现有的优惠券的状态
 };
 DomainCouponConsumption.queryCoupontWritenOffByTheUser = function queryCoupontWritenOffByTheUser(appClerkId){
-    return this.findAll({
-        where:{
-            "clerkId": appClerkId
-        }
-    });
+    let sql = `
+    select consumption.id
+    ,instance.id as instance_id, instance.coupon_instance_name, instance.data as instance_data, instance.template_instance_id
+    ,clerk.id as clerk_id, clerk.account as clerk_account, clerk.account_name as clerk_name, clerk.phone as clerk_phone
+    ,clerk.avatar as clerk_avatar, clerk.account_type as clerk_account_type
+    from t_coupon_consumption as consumption left join t_coupon_instance as instance on consumption.coupon_instance_id = instance.id
+    left join t_account as clerk on consumption.account_clerk_id = clerk.id
+    left join t_account as consumer on consumption.account_consumer_id = consumer.id
+    where clerk.id = ${appClerkId}
+    `;
+    return sequelize.query(sql, { type: sequelize.QueryTypes.SELECT })
+        .then( (arrayInstance) =>{
+            return arrayInstance.map( (ele) =>{
+                return {
+                    id: parseInt(ele['id']),
+                    couponInstance:{
+                        id: parseInt(ele['instance_id']),
+                        data: ele['instance_data'],
+                        name: ele['coupon_instance_name']
+                    },
+                    clerk:{
+                        id: parseInt(ele['clerk_id']),
+                        account: ele['clerk_account'],
+                        accountName: ele['clerk_name'],
+                        phone: ele['clerk_phone'],
+                        avatar: ele['clerk_avatar'] || '',
+                        accountType: ele['clerk_account_type']
+                    }
+                };
+            });
+        });
 };
 
 

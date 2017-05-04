@@ -196,7 +196,7 @@ paths:
     post:
       tags:
         - Coupon Template Instance Operations
-      operationId: createCouponTemplateInance
+      operationId: createCouponTemplateInstance
       summary: Creates a new coupon template instance
       parameters:
         - name: couponTemplateInstance

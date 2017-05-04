@@ -92,11 +92,8 @@ function getTheCouponListOfTheClerk(req, res){
         .queryCoupontWritenOffByTheUser(clerkUserId)
         .then( (arrayInstance) =>{
             res.status(200);
-            let resultArray = arrayInstance.map((ele, idx, array) =>{
-                return ele;
-            });
-            console.log(`result array: ${JSON.stringify(resultArray)}`);
-            res.json(resultArray);
+            console.log( JSON.stringify(arrayInstance));
+            res.json(arrayInstance);
         });
     
 }
