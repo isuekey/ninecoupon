@@ -15,7 +15,7 @@ schemes:
 consumes:
   - application/json
 paths:
-  /account/signup:
+  /ninecoupon/signup:
     x-swagger-router-controller: account
     post:
       description: create an account
@@ -35,28 +35,47 @@ paths:
         default:
           description: unexpected error
           schema:
-            $ref: '#/definitions/Error'
-  /account/signin:
+            $ref: '#/definitions/ErrorResponse'
+  /ninecoupon/anonymous:
     x-swagger-router-controller: account
     post:
-      description: login an account
-      operationId: loginAccount
+      description: create an account
+      operationId: anonymousAccount
       parameters:
         - name: account
           in: body
-          description: account
+          description: Which will be created
           required: true
           schema:
-            $ref: '#/definitions/Login'
+            $ref: '#/definitions/newAccount'
       responses:
         '200':
-          description: Account sign in
+          description: Account create
           schema:
             $ref: '#/definitions/SuccessTokenResponse'
         default:
           description: unexpected error
           schema:
-            $ref: '#/definitions/Error'
+            $ref: '#/definitions/ErrorResponse'
+          
+  /ninecoupon/account:
+    x-swagger-router-controller: account
+    get:
+      security:
+        - nineauth:
+            - read
+      description: get an account info
+      operationId: getAccount
+      responses:
+        '200':
+          description: Account create
+          schema:
+            $ref: '#/definitions/Account'
+        default:
+          description: unexpected error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+  
   '/account/status/{accountPhone}':
     x-swagger-router-controller: account
     get:
@@ -74,12 +93,12 @@ paths:
         default:
           description: unexpected error
           schema:
-            $ref: '#/definitions/Error'
+            $ref: '#/definitions/ErrorResponse'
   /coupon/template:
     x-swagger-router-controller: coupon_template
     get:
       security:
-        - oauth2:
+        - nineauth:
             - read
       tags:
         - Coupon template Operations
@@ -109,7 +128,7 @@ paths:
             $ref: '#/definitions/Error'
     post:
       security:
-        - oauth2:
+        - nineauth:
             - write
       tags:
         - Coupon template Operations
@@ -135,7 +154,7 @@ paths:
     x-swagger-router-controller: coupon_template
     delete:
       security:
-        - oauth2:
+        - nineauth:
             - write
       tags:
         - Coupon template Operations
@@ -150,7 +169,7 @@ paths:
             $ref: '#/definitions/Error'
     get:
       security:
-        - oauth2:
+        - nineauth:
             - read
       tags:
         - Coupon template Operations
@@ -176,7 +195,7 @@ paths:
     x-swagger-router-controller: coupon_template_instance
     get:
       security:
-        - oauth2:
+        - nineauth:
             - read
       tags:
         - Coupon Template Instance Operations
@@ -193,7 +212,7 @@ paths:
             $ref: '#/definitions/Error'
     post:
       security:
-        - oauth2:
+        - nineauth:
             - write
       tags:
         - Coupon Template Instance Operations
@@ -219,7 +238,7 @@ paths:
     x-swagger-router-controller: coupon_template_instance
     delete:
       security:
-        - oauth2:
+        - nineauth:
             - write
       description: Deletes the coupon template instance by id
       operationId: deleteCouponTemplateInstanceById
@@ -232,7 +251,7 @@ paths:
             $ref: '#/definitions/Error'
     get:
       security:
-        - oauth2:
+        - nineauth:
             - read
       tags:
         - Coupon template Operations
@@ -258,7 +277,7 @@ paths:
     x-swagger-router-controller: coupon_instance
     post:
       security:
-        - oauth2:
+        - nineauth:
             - write
       description: create coupon instance
       operationId: createCouponInstance
@@ -282,7 +301,7 @@ paths:
     x-swagger-router-controller: coupon_instance
     get:
       security:
-        - oauth2:
+        - nineauth:
             - read
       description: get the nine coupons for the user
       operationId: getCouponOfUser
@@ -305,7 +324,7 @@ paths:
             $ref: '#/definitions/Error'
     post:
       security:
-        - oauth2:
+        - nineauth:
             - write
       description: get the coupon of lottery
       operationId: receiveTheCoupon
@@ -334,7 +353,7 @@ paths:
     x-swagger-router-controller: coupon_instance
     get:
       security:
-        - oauth2:
+        - nineauth:
             - write
       description: get the coupon of lottery
       operationId: getCouponLotteryOfUser
@@ -359,7 +378,7 @@ paths:
     x-swagger-router-controller: coupon_instance
     put:
       security:
-        - oauth2:
+        - nineauth:
             - write
       description: write off the coupon instance
       operationId: writeOffTheCouponInstance
@@ -423,6 +442,8 @@ definitions:
         type: string
       accountName:
         type: string
+      password:
+        type: string
       phone:
         type: string
       gender:
@@ -456,15 +477,12 @@ definitions:
         type: string
         format: date-time
     required:
-      - id
-      - phone
-      - accountType
+      - account
   newAccount:
     allOf:
       - $ref: '#/definitions/Account'
     required:
-      - phone
-      - accountType
+      - account
   SuccessAccountResponse:
     allOf:
       - $ref: '#/definitions/SuccessJsonResponse'
@@ -774,12 +792,14 @@ produces:
   - text/plain
   - text/html
 securityDefinitions:
-  oauth2:
+  nineauth:
     type: oauth2
     description: nine coupon oauth2 summary
     scopes:
       read: Read access
       write: Write access
     flow: accessCode
-    authorizationUrl: 'http://petstore.swagger.wordnik.com/oauth/authorize'
-    tokenUrl: 'http://petstore.swagger.wordnik.com/oauth/token'
+    authorizationUrl: 'http://localhost:3001/oauth/authorize'
+    tokenUrl: 'http://localhost:3001/oauth/token'
+    
+    

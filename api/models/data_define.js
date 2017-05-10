@@ -1,6 +1,18 @@
 var Sequelize = require('../../config/database/sequelize').Sequelize;
 var sequelize = require('../../config/database/sequelize').sequelize;
+var bluebird = require('bluebird');
+var redisdb = require('redis');
+var redis = redisdb.createClient();
+bluebird.promisifyAll(redisdb.RedisClient.prototype);
+bluebird.promisifyAll(redisdb.Multi.prototype);
 
+var formats = {
+    user: 'users:',
+    token: "tokens:"
+};
+var redisKey = function redisKey(key, keyValue){
+    return `${key}${keyValue}`;
+};
 
 var DomainAccount = sequelize.define('t_account', {
     account:{
@@ -37,13 +49,23 @@ var DomainAccount = sequelize.define('t_account', {
         field:"account_type"
     }
 });
+DomainAccount.findReidsAccount = function findReidsAccount(newAccount){
+    let userKey = redisKey(formats.user, newAccount.account);
+    let getUser = redis.hgetallAsync(userKey);
+    return getUser;
+};
 DomainAccount.signUpAccount = function signUpAccount(newAccount){
-    return this.findOrCreate({
-        where:{
-            phone:newAccount.phone
-        },
-        defaults: newAccount
-    });
+    let userKey = redisKey(formats.user, newAccount.account);
+    return redis.hmsetAsync(userKey, newAccount)
+        .then(()=>{
+            return this.findOrCreate({
+                where:{
+                    account:newAccount.account
+                },
+                defaults: newAccount
+            });
+        });
+    
 };
 DomainAccount.signInAccount = function signInAccount(login){
     return this.findOne({
@@ -364,3 +386,5 @@ exports.DomainCouponTemplate = DomainCouponTemplate;
 exports.DomainCouponInstance = DomainCouponInstance;
 
 exports.DomainCouponConsumption = DomainCouponConsumption;
+
+
