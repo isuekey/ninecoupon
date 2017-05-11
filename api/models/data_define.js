@@ -67,11 +67,10 @@ DomainAccount.signUpAccount = function signUpAccount(newAccount){
         });
     
 };
-DomainAccount.signInAccount = function signInAccount(login){
+DomainAccount.getAccountInfo = function getAccountInfo(authUser){
     return this.findOne({
         where:{
-            account:login.account,
-            password:login.password
+            account:authUser.id
         }
     });
 };
@@ -83,68 +82,150 @@ DomainAccount.testPhoneExist = function testPhoneExist(phone){
     });
 };
 
-var DomainBrand = sequelize.define('t_brand', {
+
+var DomainAccountRelation = sequelize.define("t_account_relation", {
+    parent:{
+        type: Sequelize.BIGINT
+    },
+    account: {
+        type: Sequelize.STRING
+    },
+    accountName:{
+        type: Sequelize.STRING,
+        field: "account_name"
+    },
+    status:{
+        type: Sequelize.STRING
+    },
+    relationType:{
+        type: Sequelize.STRING,
+        field: "relation_type"
+    },
+    shop: {
+        type: Sequelize.BIGINT,
+        field: "shop_id"
+    }
+});
+/**
+ * 查询自己的店员有哪些
+ */
+DomainAccountRelation.queryMyClerkList = function queryMyClerkList(authUser){
+    return this.findAll({
+        where:{
+            parent: authUser.id,
+            relationType: "clerks"
+        }
+    });
+};
+DomainAccountRelation.queryMyClerkListInTheShop = function queryMyClerkListInTheShop(authUser, shopId){
+    return this.findAll({
+        where:{
+            parent: authUser.id,
+            relationType: "clerks",
+            shop: shopId
+        }
+    }).then((arrayInstance) =>{
+        return arrayInstance.map((ele)=>{
+            return ele.toJSON();
+        });
+    });
+};
+DomainAccountRelation.disableMyClerk = function disableMyClerk(authUser, theClerkId){
+    return this.update({status:"disabled"}, {
+        where:{
+            parent: authUser.id,
+            id: theClerkId,
+            relation_type: "clerks"
+        }
+    });
+};
+DomainAccountRelation.addMyClerk = function addMyClerk(authUser, theClerk){
+    return this.findOrCreate({
+        where: {
+            parent: authUser.id,
+            account: theClerk.account,
+            relation_type:"clerks"
+        },
+        defaults: {
+            parent: authUser.id,
+            account: theClerk.account,
+            accountName: theClerk.accountName,
+            status: "enabled",
+            relationType:"clerks"
+        }
+    });
+};
+
+var DomainArea = sequelize.define('t_area', {
     name:{
-        type:Sequelize.STRING
+        type:Sequelize.STRING,
+        field: "area_name"
     },
     status:{
         type:Sequelize.STRING
     },
-    createAt:{
-        type:Sequelize.DATE,
-        field:"create_at"
+    latitude:{
+        type:Sequelize.DOUBLE
     },
-    owner:{
-        type:Sequelize.INTEGER
+    longitude:{
+        type:Sequelize.DOUBLE
     }
 });
-DomainBrand.belongsTo(DomainAccount);
 
+DomainArea.randomAreaCoupon = function randomAreaCoupon(authUser, areaId){
+    let sql = `select template.id, template.coupon_template_name as templateName, template.data,
+        template.strategy_id as strategyId,
+        template.shop_id as shopId
+    from t_shop as shop, t_coupon_template as template
+    where shop.area_id = ${areaId} and shop.id = template.shop_id
+    and template.status = 'enabled'
+    and template.end_time < current_timestamp
+    and publish > 500
+    `;
+    return sequelize.query(sql, {type: sequelize.QueryTypes.SELECT}).then( arrayInstance => {
+        let max = arrayInstance.length;
+        let returnArrayInstance = [];
+        for(let count = 0; count < 9; ++count){
+            let index = Math.floor(Math.random() * max);
+            returnArrayInstance.push(arrayInstance[index]);
+        };
+        return returnArrayInstance.map( ele => ele.toJSON() );
+    });
+};
 
 var DomainShop = sequelize.define("t_shop", {
     name:{
-        type:Sequelize.STRING
+        type:Sequelize.STRING,
+        field:"shop_name"
     },
-    createAt:{
-        type:Sequelize.DATE,
-        field:"create_at"
+    ownerId:{
+        type:Sequelize.BIGINT,
+        field:"owner_account_id"
     },
     owner:{
-        type:Sequelize.INTEGER
+        type:Sequelize.STRING,
+        field:"owner_account"
     },
-    brand:{
-        type:Sequelize.INTEGER
+    area:{
+        type:Sequelize.INTEGER,
+        field:"area_id"
     }
 });
-DomainShop.belongsTo(DomainAccount);
-DomainShop.belongsTo(DomainBrand);
 
-//++ 发行优惠券的时候的虚拟组织 begin
-var DomainOrganization = sequelize.define("t_organization", {
-    name:{
-        type:Sequelize.STRING
-    }
-});
-var DomainMechanism = sequelize.define("t_mechanism", {
-    name:{
-        type:Sequelize.STRING
-    },
-    organization:{
-        type:Sequelize.INTEGER
-    },
-    shop:{
-        type:Sequelize.INTEGER
-    }
-});
-//-- 发行优惠券的时候的虚拟组织 begin
-var DomainCategory = sequelize.define("t_coupon_category", {
-    name:{
-        type:Sequelize.STRING
-    }
-});
-var DomainCouponTemplate = sequelize.define("t_coupon_template", {
-    name:{
-        type:Sequelize.STRING
+DomainShop.queryMyShopList = function queryMyShopList(authUser){
+    return this.findAll({
+        where:{
+            owner: authUser.id
+        }
+    }).then((arrayInstance)=>{
+        return arrayInstance.map( ele => ele.toJSON());
+    });
+};
+
+var DomainCouponStrategy = sequelize.define("t_coupon_strategy", {
+    strategyName:{
+        type:Sequelize.STRING,
+        field:"strategy_name"
     },
     data:{
         type:Sequelize.JSON
@@ -154,88 +235,128 @@ var DomainCouponTemplate = sequelize.define("t_coupon_template", {
     },
     origin:{
         type:Sequelize.STRING
-    },
-    createAt:{
-        type:Sequelize.DATE,
-        field:"created_at"
     }
 });
-DomainCategory.hasMany(DomainCouponTemplate, { constraints: false});
-DomainCouponTemplate.belongsTo(DomainCategory);
-DomainCouponTemplate.queryCouponTemplate = function queryCouponTemplate(templateStatus, templateType, templateOrigin){
-    var where = {};
-    if(templateStatus){
-        where.status = templateStatus;
-    };
-    if(templateType){
-        where.type = templateType;
-    };
-    if(templateOrigin){
-        where.origin = templateOrigin;
-    };
-    return this.findAll({
-        where
-    });
-};
-DomainCouponTemplate.createCouponTemplate = function createCouponTemplate(newCouponTemplate){
-    return this.findOrCreate({
-        where:{
-            name:newCouponTemplate.name,
-            data:newCouponTemplate.data
-        },
-        defaults: newCouponTemplate
-    });
-};
-DomainCouponTemplate.findCouponTemplateById = function findCouponTemplateById(couponTemplateId){
-    return this.findById(couponTemplateId);
+
+var DomainCouponStrategyAccess = sequelize.define("t_coupon_strategy_access", {
+    strategyId:{
+        type:Sequelize.BIGINT,
+        field:"strategy_id"
+    },
+    shopId:{
+        type:Sequelize.BIGINT,
+        field:"shop_id"
+    },
+    status:{
+        type:Sequelize.STRING
+    }
+});
+
+DomainCouponStrategyAccess.queryStrategyAccessed = function queryStrategyAccessed(authUser){
+    let sql = `
+    select strategy.id, strategy.strateg_name, strategy.data, strategy.origin, strategy.status as strategy_status,
+    access.id as access_id, access.status as access_status
+    from t_coupon_strategy as strategy, t_coupon_strategy_access as access, t_shop as shop, t_account as account
+    where strategy.id = access.strategy_id and access.shop_id = shop.id
+    and shop.owner_account_id = account.id
+    and account.account = ${authUser.id}
+    and strategy.status = 'enabled'
+    `;
+    return sequelize.query(sql, {type: sequelize.QueryTypes.SELECT})
+        .then( (arrayInstance) =>{
+            return arrayInstance.map( (ele) =>{
+                return ele.toJSON();
+            });
+        });
 };
 
-var DomainCouponTemplateInstance = sequelize.define("t_coupon_template_instance", {
+var DomainCouponTemplate = sequelize.define("t_coupon_template", {
     name:{
         type:Sequelize.STRING,
-        field:"coupon_template_instance_name"
+        field:'coupon_template_name'
     },
     data:{
-        type:Sequelize.STRING
+        type:Sequelize.JSON
+    },
+    strategyId:{
+        type:Sequelize.BIGINT,
+        field: "strategy_id"
+    },
+    shopId:{
+        type:Sequelize.BIGINT,
+        field: "shop_id"
     },
     status:{
         type:Sequelize.STRING
     },
-    publishType:{
-        type:Sequelize.STRING,
-        field:"publish_type"
+    origin:{
+        type:Sequelize.STRING
     },
-    templateId:{
-        type:Sequelize.INTEGER,
-        field:"template_id"
+    maxcount:{
+        type:Sequelize.INTEGER
     },
-    brandId:{
-        type:Sequelize.INTEGER,
-        field:"brand_id"
-    },
-    createAt:{
+    beginTime:{
         type:Sequelize.DATE,
-        field:"created_at"
+        field:"begin_time"
+    },
+    endTime:{
+        type:Sequelize.DATE,
+        field:"end_time"
+    },
+    publish:{
+        type: Sequelize.INTEGER
     }
 });
-DomainCouponTemplateInstance.queryCouponTemplateInstance = function queryCouponTemplateInstance(){
-    return this.findAll();
-};
-DomainCouponTemplateInstance.createCouponTemplateInstance = function createCouponTemplateInstance(newCouponTemplateInstance){
+
+DomainCouponTemplate.generateTemplateByStrategy = function generateTemplateByStrategy(authUser, accessStrategy){
+    console.log(accessStrategy);
     return this.findOrCreate({
         where:{
-            name:newCouponTemplateInstance.name,
-            data:newCouponTemplateInstance.data,
-            brandId:newCouponTemplateInstance.brandId
+            strategyId:accessStrategy.strategyId,
+            shopId: accessStrategy.shopId,
+            data: accessStrategy.data
         },
-        defaults: newCouponTemplateInstance
+        defaults:{
+            name: accessStrategy.name,
+            data: accessStrategy.data,
+            strategyId:accessStrategy.strategyId,
+            shopId: accessStrategy.shopId,
+            status: "enabled",
+            origin: "suyuan",
+            maxcount: accessStrategy.maxcount,
+            beginTime: accessStrategy.beginTime,
+            endTime: accessStrategy.endTime,
+            publish: accessStrategy.publish
+        }
+    }).then((arrayInstance, created)=>{
+        let arrayJson = arrayInstance.map((ele)=>{
+            return ele.toJSON();
+        });
+        return [arrayJson, created];
     });
 };
-DomainCouponTemplateInstance.deleteCouponTemplateInstance = function deleteCouponTemplateInstance(couponTemplateInstanceId){
-    return this.update({ status:"disabled" }, { where:{ id: couponTemplateInstanceId } });
+
+DomainCouponTemplate.queryShopTemplateList = function queryShopTemplateList(authUser, shopId){
+    return this.finAll({
+        where:{
+            shopId:shopId
+        }
+    }).then( (arrayInstance)=>{
+        return arrayInstance.map((ele)=>{
+            return ele.toJSON();
+        });
+    });
 };
-DomainCouponTemplateInstance.getCouponTemplateInstanceById = function getCouponTemplateInstanceById(couponTemplateInstanceId){
-    return this.findById(couponTemplateInstanceId);
+
+DomainCouponTemplate.publishShopTemplate = function publishShopTemplate(authUser, templateId){
+    return this.update({publish:1000}, {
+        where:{ id: templateId }
+    }).then((counted, rows)=>{
+        let rowJson = rows.map((ele) =>{
+            return ele.toJSON();
+        });
+        return [ counted, rowJson ];
+    });
 };
 
 var DomainCouponInstance = sequelize.define("t_coupon_instance", {
@@ -251,69 +372,91 @@ var DomainCouponInstance = sequelize.define("t_coupon_instance", {
     data:{
         type:Sequelize.JSON
     },
+    accountId:{
+        type:Sequelize.BIGINT,
+        field: "account_id"
+    },
+    account:{
+        type:Sequelize.STRING
+    },
+    accountName:{
+        type:Sequelize.STRING,
+        field: "account_name"
+    },
     status:{
         type:Sequelize.STRING
     },
-    templateInstanceId:{
-        type:Sequelize.INTEGER,
-        field:"template_instance_id"
+    templateId:{
+        type:Sequelize.BIGINT,
+        field:"template_id"
     },
-    organizationId:{
-        type:Sequelize.INTEGER,
-        field:"organization_id"
+    shopId:{
+        type:Sequelize.BIGINT,
+        field:"shop_id"
     },
-    createAt:{
-        type:Sequelize.DATE,
-        field:"created_at"
+    randomId:{
+        type:Sequelize.INTEGER,
+        field:"random_id"
     }
 });
-DomainCouponInstance.createCouponInstanceFromTemplate = function createCouponInstanceFromTemplate(couponTemplateInstance){
-    //TODO 根据模版实例创建优惠券
-    console.log(couponTemplateInstance);
-    let records = [];
-    let data = couponTemplateInstance.data;
-    let counts = couponTemplateInstance.data.count;
-    for (let index = 0; index < counts; ++index){
-        records.push({
-            name: couponTemplateInstance.name,
-            data : data,
-            status: 'enabled',
-            templateInstanceId: couponTemplateInstance.id
-        });
-    };
-    console.log(records);
-    return this
-        .bulkCreate(records, {
-            fields:['name', 'data', 'status', 'templateInstanceId']
-        });
-    
-};
-DomainCouponInstance.queryNineCouponInstanceForUser = function queryNineCouponInstanceForUser(appUserId){
-    //TODO 给某个用户获取九张优惠券
+
+DomainCouponInstance.queryUserCoupon = function queryUserCoupon(authUser){
     return this.findAll({
-        limit:9
+        where:{
+            account: authUser.id
+        }
+    }).then( (arrayInstance)=>{
+        return arrayInstance.map((ele) =>{
+            return ele.toJSON();
+        });
     });
 };
-DomainCouponInstance.takeOffTheCouponInstance = function takeOffTheCouponInstance(appUserId, couponInstance){
-    //TODO 用户领取优惠券
-    return this.findAll({});
+
+DomainCouponInstance.generateCouponFromTemplate = function generateCouponFromTemplate(authUser, couponTemplate){
+    return this.findOrCreate({
+        where:{
+            account: authUser.id,
+            randomId: couponTemplate.randomId,
+            templateId: couponTemplate.id
+        },
+        defaults:{
+            name: couponTemplate.name,
+            data: couponTemplate.data,
+            account: authUser.id,
+            stauts: "enabled",
+            templateId: couponTemplate.id,
+            shopId: couponTemplate.shopId,
+            randomId: couponTemplate.randomId
+        }
+    }).then( (arrayInstance, created)=>{
+        return [arrayInstance.map( ele => ele.toJSON()), created];
+    });
 };
+
 var DomainCouponConsumption = sequelize.define("t_coupon_consumption", {
-    couponInstanceId:{
-        type:Sequelize.INTEGER,
+    instanceId:{
+        type:Sequelize.BIGINT,
         field:"coupon_instance_id"
     },
-    oranizationId:{
-        type:Sequelize.INTEGER,
-        field:"organization_id"
+    shopId:{
+        type:Sequelize.BIGINT,
+        field:"shop_id"
     },
     consumerId:{
-        type:Sequelize.INTEGER,
+        type:Sequelize.BIGINT,
         field:"account_consumer_id"
     },
+    consumer:{
+        type:Sequelize.STRING,
+        field:"account_consumer"
+    },
     clerkId:{
-        type:Sequelize.INTEGER,
+        type:Sequelize.BIGINT,
         field:"account_clerk_id"
+    },
+    clerk:{
+        type:Sequelize.STRING,
+        field:"account_clerk"
     },
     latitude:{
         type:Sequelize.DOUBLE,
@@ -322,69 +465,42 @@ var DomainCouponConsumption = sequelize.define("t_coupon_consumption", {
     longitude:{
         type:Sequelize.DOUBLE,
         field:"longitude"
-    },
-    createAt:{
-        type:Sequelize.DATE,
-        field:"created_at"
     }
 });
-DomainCouponConsumption.writeOffTheCouponInstance = function writeOffTheCouponInstance(couponInstanceId, couponDetail){
-    let defaultValue = {
-        "couponInstanceId": couponInstanceId,
-        "clerkId": couponDetail.clerk.id
-    };
-    return this.findOrCreate({
+
+DomainCouponConsumption.queryMyWriteOffInTheShop = function queryMyWriteOffInTheShop(authUser, shopId){
+    return this.findAll({
         where:{
-            "coupon_instance_id":couponInstanceId
-        },
-        defaults: defaultValue
+            clerk: authUser.id,
+            shopId
+        }
+    }).then( (instanceArray) =>{
+        return instanceArray.map( ele => ele.toJSON() );
     });
 };
-DomainCouponConsumption.queryCouponInstanceOfUser = function queryCouponInstanceOfUser(appUserId){
-    //TODO 获取用户现有的优惠券的状态
-};
-DomainCouponConsumption.queryCoupontWritenOffByTheUser = function queryCoupontWritenOffByTheUser(appClerkId){
-    let sql = `
-    select consumption.id
-    ,instance.id as instance_id, instance.coupon_instance_name, instance.data as instance_data, instance.template_instance_id
-    ,clerk.id as clerk_id, clerk.account as clerk_account, clerk.account_name as clerk_name, clerk.phone as clerk_phone
-    ,clerk.avatar as clerk_avatar, clerk.account_type as clerk_account_type
-    from t_coupon_consumption as consumption left join t_coupon_instance as instance on consumption.coupon_instance_id = instance.id
-    left join t_account as clerk on consumption.account_clerk_id = clerk.id
-    left join t_account as consumer on consumption.account_consumer_id = consumer.id
-    where clerk.id = ${appClerkId}
-    `;
-    return sequelize.query(sql, { type: sequelize.QueryTypes.SELECT })
-        .then( (arrayInstance) =>{
-            return arrayInstance.map( (ele) =>{
-                return {
-                    id: parseInt(ele['id']),
-                    couponInstance:{
-                        id: parseInt(ele['instance_id']),
-                        data: ele['instance_data'],
-                        name: ele['coupon_instance_name']
-                    },
-                    clerk:{
-                        id: parseInt(ele['clerk_id']),
-                        account: ele['clerk_account'],
-                        accountName: ele['clerk_name'],
-                        phone: ele['clerk_phone'],
-                        avatar: ele['clerk_avatar'] || '',
-                        accountType: ele['clerk_account_type']
-                    }
-                };
-            });
-        });
+
+DomainCouponConsumption.writeOffCoupon = function writeOffCoupon(authUser, coupon){
+    return this.findOrCreate({
+        where:{
+            instanceId: coupon.id
+        },
+        defaults:{
+            instanceId: coupon.id,
+            shopId: coupon.shopId,
+            consumer: coupon.consumer,
+            clerk: coupon.clerk
+        }
+    }).then((arrayInstance, created)=>{
+        return [arrayInstance.map( ele => ele.toJSON() ), created];
+    });
 };
 
 
 //exports.Visitor = Visitor;
 exports.DomainAccount = DomainAccount;
-
+exports.DomainAccountRelation = DomainAccountRelation;
+exports.DomainCouponStrategyAccess = DomainCouponStrategyAccess;
 exports.DomainCouponTemplate = DomainCouponTemplate;
-
 exports.DomainCouponInstance = DomainCouponInstance;
-
 exports.DomainCouponConsumption = DomainCouponConsumption;
-
 

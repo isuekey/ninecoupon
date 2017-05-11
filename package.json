@@ -9,6 +9,7 @@
   "main": "app.js",
   "dependencies": {
     "bluebird": "^3.5.0",
+    "body-parser": "^1.17.1",
     "connect-redis": "^3.3.0",
     "express": "^4.12.3",
     "oauth2-server": "^2.4.1",
@@ -16,7 +17,6 @@
     "pg-hstore": "^2.3.2",
     "redis": "^2.7.1",
     "sequelize": "^3.30.4",
-    "swagger-express-mw": "^0.1.0",
     "util": "^0.10.3"
   },
   "devDependencies": {

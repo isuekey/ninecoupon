@@ -6,62 +6,17 @@ var util = require("util");
 var DomainAccount = require("../models/data_define").DomainAccount;
 
 module.exports = {
-    loginAccount: loginAccount,
     createAccount: createAccount,
     anonymousAccount: anonymousAccount,
     getAccount
 };
 
 /**
- * req: handle the request object
- * res: handle the response object
-**/
-function loginAccount(req, res){
-    var login = req.swagger.params.account.value;
-    let result = {
-        code: 1000,
-        message: "not give the correct params"
-    };
-    if(!login || !(login.account || login.password)){
-        res.status(200);
-        res.json(result);
-        return;
-    };
-    DomainAccount
-        .signInAccount(login)
-        .then((accountInfo)=>{
-            res.status(200);
-            if(accountInfo){
-                let info = JSON.parse(JSON.stringify(accountInfo));
-                let accountOut = {};
-                for(var key in info){
-                    if(info[key]){
-                        accountOut[key] = accountInfo[key];
-                    };
-                }
-                accountOut.id = parseInt(accountOut.id);
-                result = {
-                    code: 0,
-                    account: accountOut,
-                    message: 'found an active user',
-                    token:'token',
-                    refresh:'refresh_token',
-                    effective: 30
-                };
-            }else{
-                result = {
-                    code: 1001,
-                    message: "not found the user"
-                };
-            };
-            res.json(result);
-        }, (error)=>{
-            console.log(`request:${req} \n response:${res}`);
-        });
-}
-
+ * req request
+ * res response
+ */
 function createAccount(req, res){
-    var account = req.swagger.params.account.value;
+    let account = req.body;
     let result = {
         code: 1100,
         message: "没有提供有效参数"
@@ -74,7 +29,6 @@ function createAccount(req, res){
     delete(account.id);
     DomainAccount.findReidsAccount(account)
         .then((user)=>{
-            console.log(user);
             if(user){
                 result = {
                     code: 1101,
@@ -82,7 +36,6 @@ function createAccount(req, res){
                 };
                 
                 res.json(result);
-                console.log(result);
             }else{
                 DomainAccount.signUpAccount(account)
                     .then((xxx)=>{
@@ -92,14 +45,41 @@ function createAccount(req, res){
                         };
                         res.json(result);
                     },(err)=>{
-                        console.log(err);
+                        res.json(err);
                     });
             }
         });
 }
+/**
+ * anonymous account sign up
+ * req body { account:string, password:string}
+ * res 
+ */
 function anonymousAccount(req, res){
     createAccount(req, res);
 }
+/**
+ * get account info by token
+ */
 function getAccount(req, res){
-    console.log(req);
+    let authUser = req.user;
+    let result = {
+        code: 1110,
+        message: "没有找到用户"
+    };
+    
+    if(authUser){
+        DomainAccount
+            .getAccountInfo(authUser)
+            .then( (domainAccount)=>{
+                res.status(200);
+                res.json(domainAccount.toJSON());
+            })
+            .catch( (error) =>{
+                res.json(error);
+            });
+    }else{
+        res.status(500);
+        res.json(result);
+    }
 }
