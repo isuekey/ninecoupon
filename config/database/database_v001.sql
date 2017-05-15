@@ -5,12 +5,12 @@ create table if not exists t_account (
    phone varchar(40),
    gender integer,
    avatar varchar(1000),
-   password varchar(200),
+   password varchar(200) default '123456',
    created_at timestamp default current_timestamp,
    status varchar(40),
    promoter integer,
    updated_at timestamp,
-   account_type varchar(40)
+   account_type integer
 );
 
 create table if not exists t_account_relation (
@@ -28,6 +28,7 @@ create table if not exists t_account_relation (
 create table if not exists t_area (
     id serial primary key,
     area_name varchar(400),
+    area_index varchar(400),
     status varchar(40),
     created_at timestamp default current_timestamp,
     updated_at timestamp,
@@ -40,7 +41,8 @@ create table if not exists t_shop (
    shop_name varchar(400),
    owner_account_id integer,
    owner_account varchar(400),
-   brand_id integer,
+   area_id integer,
+   area_index varchar(400),
    created_at timestamp default current_timestamp,
    updated_at timestamp
 );
@@ -151,18 +153,18 @@ create table if not exists t_coupon_template_instance (
 
 
 
-insert into t_account ( account, account_name, phone, gender, avatar, status, account_type) values ('admin','administrator', '13718961111', 0, null, 'enabled', 'admin' );
-insert into t_account ( account, account_name, phone, gender, avatar, status, account_type) values ('wuchunhua','吴春华', '13718961112', 2, null, 'enabled', 'admin' );
-insert into t_account ( account, account_name, phone, gender, avatar, status, account_type) values ('clerk','clerk', '13718961113', 0, null, 'enabled', 'clerk' );
-insert into t_account ( account, account_name, phone, gender, avatar, status, account_type) values ('wangminghua','wangminghua', '13718961114', 1, null, 'enabled', 'clerk' );
-insert into t_account ( account, account_name, phone, gender, avatar, status, account_type) values ('shop','shop', '13718961115', 0, null, 'enabled', 'merchant' );
-insert into t_account ( account, account_name, phone, gender, avatar, status, account_type) values ('chenwulin','chenwulin', '13718961116', 1, null, 'enabled', 'merchant' );
-insert into t_account ( account, account_name, phone, gender, avatar, status, account_type) values ('brand','brand', '137189611117', 0, null, 'enabled', 'brand' );
-insert into t_account ( account, account_name, phone, gender, avatar, status, account_type) values ('liujidong','liujidong', '13718961118', 1, null, 'enabled', 'brand' );
-insert into t_account ( account, account_name, phone, gender, avatar, status, account_type) values ('market','market', '13718961119', 0, null, 'enabled', 'market' );
-insert into t_account ( account, account_name, phone, gender, avatar, status, account_type) values ('cuipeng','cuipeng', '13718961120', 1, null, 'enabled', 'market' );
-insert into t_account ( account, account_name, phone, gender, avatar, status, account_type) values ('customer','customer', '13718961121', 0, null, 'enabled', 'customer' );
-insert into t_account ( account, account_name, phone, gender, avatar, status, account_type) values ('liuhanru','liuhanru', '13718961122', 1, null, 'enabled', 'customer' );
+insert into t_account ( account, account_name, phone, gender, avatar, status, account_type) values ('admin','administrator', '13718961111', 0, null, 'enabled', 1000 );
+insert into t_account ( account, account_name, phone, gender, avatar, status, account_type) values ('wuchunhua','吴春华', '13718961112', 2, null, 'enabled', 1000 );
+insert into t_account ( account, account_name, phone, gender, avatar, status, account_type) values ('clerk','clerk', '13718961113', 0, null, 'enabled', 100 );
+insert into t_account ( account, account_name, phone, gender, avatar, status, account_type) values ('wangminghua','wangminghua', '13718961114', 1, null, 'enabled', 100 );
+insert into t_account ( account, account_name, phone, gender, avatar, status, account_type) values ('shop','shop', '13718961115', 0, null, 'enabled', 120 );
+insert into t_account ( account, account_name, phone, gender, avatar, status, account_type) values ('chenwulin','chenwulin', '13718961116', 1, null, 'enabled', 120 );
+insert into t_account ( account, account_name, phone, gender, avatar, status, account_type) values ('brand','brand', '137189611117', 0, null, 'enabled', 160 );
+insert into t_account ( account, account_name, phone, gender, avatar, status, account_type) values ('liujidong','liujidong', '13718961118', 1, null, 'enabled', 160 );
+insert into t_account ( account, account_name, phone, gender, avatar, status, account_type) values ('market','market', '13718961119', 0, null, 'enabled', 200 );
+insert into t_account ( account, account_name, phone, gender, avatar, status, account_type) values ('cuipeng','cuipeng', '13718961120', 1, null, 'enabled', 200 );
+insert into t_account ( account, account_name, phone, gender, avatar, status, account_type) values ('customer','customer', '13718961121', 0, null, 'enabled', 0 );
+insert into t_account ( account, account_name, phone, gender, avatar, status, account_type) values ('liuhanru','liuhanru', '13718961122', 1, null, 'enabled', 0 );
 
 insert into t_coupon_template (coupon_template_name, data, status, origin) values ('discounted','{"name":"全场打折卡", "discount":1}', 'enabled','suyuan');
 

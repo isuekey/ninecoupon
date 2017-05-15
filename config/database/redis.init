@@ -1,5 +1,8 @@
-HSET "client:c9abdba79a013827bb66cf4bad8a846c" "clientSecret" "1f3e8ee63ccde44d62a4ab860d658a23"
+HMSET "clients:c9abdba79a013827bb66cf4bad8a846c" "clientId" "c9abdba79a013827bb66cf4bad8a846c" "clientSecret" "1f3e8ee63ccde44d62a4ab860d658a23"
 SADD "clients:c9abdba79a013827bb66cf4bad8a846c:grant_types" "password" "refresh_token"
+HMSET "users:admin" id admin username administrator password 123456
+HMSET "users:liuhanru" id liuhanru username liuhanru password 123456
+HMSET "users:cuipeng" id cuipeng username cuipeng password 123456
 
 db.multi()
   .hmset('users:username', {

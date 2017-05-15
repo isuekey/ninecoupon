@@ -11,7 +11,7 @@ module.exports = {
     addMyClerk,
     queryMyClerkListInTheShop,
     queryMyWriteOffInTheShop,
-    writeoffCoupon
+    writeOffCoupon
 };
 
 
@@ -128,15 +128,16 @@ function queryMyWriteOffInTheShop(req, res){
     });
 };
 
-function writeoffCoupon(req, res){
+function writeOffCoupon(req, res){
     let authUser = req.user;
     let coupon = req.body;
-    DomainCouponConsumption.writeoffCoupon(authUser, coupon).then((arrayJson, created)=>{
+    DomainCouponConsumption.writeOffCoupon(authUser, coupon).then((arrayInstance, created)=>{
+        console.log(created);
         if(created){
             res.json({
                 code:0,
                 message:"核销成功",
-                consumption: arrayJson[0]
+                consumption: arrayInstance[0].toJSON()
             });
         }else{
             res.json({

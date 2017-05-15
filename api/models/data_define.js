@@ -45,7 +45,7 @@ var DomainAccount = sequelize.define('t_account', {
         type:Sequelize.INTEGER
     },
     accountType:{
-        type:Sequelize.STRING,
+        type:Sequelize.INTEGER,
         field:"account_type"
     }
 });
@@ -144,14 +144,16 @@ DomainAccountRelation.addMyClerk = function addMyClerk(authUser, theClerk){
         where: {
             parent: authUser.id,
             account: theClerk.account,
-            relation_type:"clerks"
+            relation_type:"clerks",
+            shop: theClerk.shop
         },
         defaults: {
             parent: authUser.id,
             account: theClerk.account,
             accountName: theClerk.accountName,
             status: "enabled",
-            relationType:"clerks"
+            relationType:"clerks",
+            shop: theClerk.shop
         }
     });
 };
@@ -160,6 +162,10 @@ var DomainArea = sequelize.define('t_area', {
     name:{
         type:Sequelize.STRING,
         field: "area_name"
+    },
+    areaIndex:{
+        type:Sequelize.STRING,
+        field: "area_index"
     },
     status:{
         type:Sequelize.STRING
@@ -172,24 +178,48 @@ var DomainArea = sequelize.define('t_area', {
     }
 });
 
-DomainArea.randomAreaCoupon = function randomAreaCoupon(authUser, areaId){
+DomainArea.randomAreaCoupon = function randomAreaCoupon(authUser, areaIndex){
     let sql = `select template.id, template.coupon_template_name as templateName, template.data,
         template.strategy_id as strategyId,
-        template.shop_id as shopId
+        template.shop_id as shopId,
+        template.origin as orign,
+        shop.shop_name as shopName
     from t_shop as shop, t_coupon_template as template
-    where shop.area_id = ${areaId} and shop.id = template.shop_id
+    where shop.area_index = '${areaIndex}' and shop.id = template.shop_id
     and template.status = 'enabled'
-    and template.end_time < current_timestamp
-    and publish > 500
+    and template.end_time > current_timestamp
+    and template.publish > 500
     `;
     return sequelize.query(sql, {type: sequelize.QueryTypes.SELECT}).then( arrayInstance => {
         let max = arrayInstance.length;
         let returnArrayInstance = [];
-        for(let count = 0; count < 9; ++count){
+        if(arrayInstance.length> 0)for(let count = 0; count < 9; ++count){
             let index = Math.floor(Math.random() * max);
+            let instance = arrayInstance[index];
             returnArrayInstance.push(arrayInstance[index]);
         };
-        return returnArrayInstance.map( ele => ele.toJSON() );
+        return returnArrayInstance;
+    });
+};
+
+DomainArea.queryAreaList = function queryAreaList(){
+    return this.findAll({}).then( arrayInstance =>{
+        return arrayInstance.map( ele => ele.toJSON() );
+    });
+};
+DomainArea.addNewArea = function addNewArea(areaInfo){
+    return this.findOrCreate({
+        where:{
+            areaIndex: areaInfo.areaIndex
+        },
+        defaults:{
+            name: areaInfo.name,
+            areaIndex: areaInfo.areaIndex,
+            status: areaInfo.status,
+            latitude: areaInfo.latitude,
+            longitude: areaInfo.longitude
+        }
+    }).then( (arrayInstance, created) =>{
     });
 };
 
@@ -209,6 +239,10 @@ var DomainShop = sequelize.define("t_shop", {
     area:{
         type:Sequelize.INTEGER,
         field:"area_id"
+    },
+    areaIndex:{
+        type:Sequelize.STRING,
+        field:"area_index"
     }
 });
 
@@ -221,7 +255,40 @@ DomainShop.queryMyShopList = function queryMyShopList(authUser){
         return arrayInstance.map( ele => ele.toJSON());
     });
 };
+DomainShop.queryShopOfTheArea = function queryShopOfTheArea(areaIndex){
+    return this.findAll({
+        where:{
+            areaIndex: areaIndex
+        }
+    }).then((arrayInstance)=>{
+        return arrayInstance.map( ele => ele.toJSON());
+    });
+};
+DomainShop.addNewShopOfTheArea = function addNewShopOfTheArea(newShop){
+    return this.findOrCreate({
+        where:{
+            name: newShop.name,
+            owner: newShop.owner,
+            areaIndex: newShop.areaIndex
+        },
+        defaults:{
+            name: newShop.name,
+            owner: newShop.owner,
+            areaIndex: newShop.areaIndex
+        }
+    });
+};
+DomainShop.queryMyShopWorkList = function queryMyShopWorkList(authUser){
+    let sql = `
+    select shop.id, shop.shop_name as shopname,shop.owner_account_id as ownerid,
+    shop.owner_account as owneraccount, shop.area_id as areaid,
+    shop.area_index as areaindex
+    from t_shop as shop, t_account_relation as relation
+    where shop.id = relation.shop_id
+    and relation.account = '${authUser.id}';`;
+    return sequelize.query(sql, {type: sequelize.QueryTypes.SELECT});
 
+};
 var DomainCouponStrategy = sequelize.define("t_coupon_strategy", {
     strategyName:{
         type:Sequelize.STRING,
@@ -238,6 +305,26 @@ var DomainCouponStrategy = sequelize.define("t_coupon_strategy", {
     }
 });
 
+DomainCouponStrategy.addNewStrategy = function addNewStrategy(strategy){
+    return this.findOrCreate({
+        where:{
+            strategyName: strategy.strategyName,
+            origin: strategy.origin
+        },
+        defaults:{
+            strategyName: strategy.strategyName,
+            origin: strategy.origin,
+            data: strategy.data,
+            status: "enabled"
+        }
+    });
+};
+DomainCouponStrategy.queryStrategyList = function queryStrategyList(){
+    return this.findAll().then((arrayInstance)=>{
+        return arrayInstance.map( ele => ele.toJSON() );
+    });
+};
+
 var DomainCouponStrategyAccess = sequelize.define("t_coupon_strategy_access", {
     strategyId:{
         type:Sequelize.BIGINT,
@@ -252,24 +339,33 @@ var DomainCouponStrategyAccess = sequelize.define("t_coupon_strategy_access", {
     }
 });
 
-DomainCouponStrategyAccess.queryStrategyAccessed = function queryStrategyAccessed(authUser){
+DomainCouponStrategyAccess.queryStrategyAccessedOfTheShop = function queryStrategyAccessedOfTheShop(shopId){
     let sql = `
-    select strategy.id, strategy.strateg_name, strategy.data, strategy.origin, strategy.status as strategy_status,
-    access.id as access_id, access.status as access_status
-    from t_coupon_strategy as strategy, t_coupon_strategy_access as access, t_shop as shop, t_account as account
+    select strategy.id as strategy_id, strategy.strategy_name, strategy.data, strategy.origin, strategy.status as strategy_status,
+    access.id as access_id, access.status as access_status, access.shop_id
+    from t_coupon_strategy as strategy, t_coupon_strategy_access as access, t_shop as shop
     where strategy.id = access.strategy_id and access.shop_id = shop.id
-    and shop.owner_account_id = account.id
-    and account.account = ${authUser.id}
     and strategy.status = 'enabled'
+    and shop.id = ${shopId}
     `;
     return sequelize.query(sql, {type: sequelize.QueryTypes.SELECT})
         .then( (arrayInstance) =>{
-            return arrayInstance.map( (ele) =>{
-                return ele.toJSON();
-            });
+            return arrayInstance;
         });
 };
-
+DomainCouponStrategyAccess.addNewStrategyAccess = function addNewStrategyAccess(access){
+    return this.findOrCreate({
+        where:{
+            strategyId: access.strategyId,
+            shopId: access.shopId
+        },
+        defaults:{
+            strategyId: access.strategyId,
+            shopId: access.shopId,
+            status:"enabled"
+        }
+    });
+};
 var DomainCouponTemplate = sequelize.define("t_coupon_template", {
     name:{
         type:Sequelize.STRING,
@@ -309,7 +405,6 @@ var DomainCouponTemplate = sequelize.define("t_coupon_template", {
 });
 
 DomainCouponTemplate.generateTemplateByStrategy = function generateTemplateByStrategy(authUser, accessStrategy){
-    console.log(accessStrategy);
     return this.findOrCreate({
         where:{
             strategyId:accessStrategy.strategyId,
@@ -329,15 +424,13 @@ DomainCouponTemplate.generateTemplateByStrategy = function generateTemplateByStr
             publish: accessStrategy.publish
         }
     }).then((arrayInstance, created)=>{
-        let arrayJson = arrayInstance.map((ele)=>{
-            return ele.toJSON();
-        });
-        return [arrayJson, created];
+        let result = arrayInstance[0].toJSON();
+        return Promise.all(result, created);
     });
 };
 
 DomainCouponTemplate.queryShopTemplateList = function queryShopTemplateList(authUser, shopId){
-    return this.finAll({
+    return this.findAll({
         where:{
             shopId:shopId
         }
@@ -351,20 +444,10 @@ DomainCouponTemplate.queryShopTemplateList = function queryShopTemplateList(auth
 DomainCouponTemplate.publishShopTemplate = function publishShopTemplate(authUser, templateId){
     return this.update({publish:1000}, {
         where:{ id: templateId }
-    }).then((counted, rows)=>{
-        let rowJson = rows.map((ele) =>{
-            return ele.toJSON();
-        });
-        return [ counted, rowJson ];
     });
 };
 
 var DomainCouponInstance = sequelize.define("t_coupon_instance", {
-    id:{
-        type:Sequelize.INTEGER,
-        primaryKey:true,
-        field:"id"
-    },
     name:{
         type:Sequelize.STRING,
         field:'coupon_instance_name'
@@ -417,19 +500,17 @@ DomainCouponInstance.generateCouponFromTemplate = function generateCouponFromTem
         where:{
             account: authUser.id,
             randomId: couponTemplate.randomId,
-            templateId: couponTemplate.id
+            templateId: couponTemplate.templateId
         },
         defaults:{
             name: couponTemplate.name,
             data: couponTemplate.data,
             account: authUser.id,
             stauts: "enabled",
-            templateId: couponTemplate.id,
+            templateId: couponTemplate.templateId,
             shopId: couponTemplate.shopId,
             randomId: couponTemplate.randomId
         }
-    }).then( (arrayInstance, created)=>{
-        return [arrayInstance.map( ele => ele.toJSON()), created];
     });
 };
 
@@ -482,16 +563,14 @@ DomainCouponConsumption.queryMyWriteOffInTheShop = function queryMyWriteOffInThe
 DomainCouponConsumption.writeOffCoupon = function writeOffCoupon(authUser, coupon){
     return this.findOrCreate({
         where:{
-            instanceId: coupon.id
+            instanceId: coupon.instanceId
         },
         defaults:{
-            instanceId: coupon.id,
-            shopId: coupon.shopId,
+            instanceId: coupon.instanceId,
+            shopId: coupon.shopid,
             consumer: coupon.consumer,
-            clerk: coupon.clerk
+            clerk: authUser.id
         }
-    }).then((arrayInstance, created)=>{
-        return [arrayInstance.map( ele => ele.toJSON() ), created];
     });
 };
 
@@ -503,4 +582,6 @@ exports.DomainCouponStrategyAccess = DomainCouponStrategyAccess;
 exports.DomainCouponTemplate = DomainCouponTemplate;
 exports.DomainCouponInstance = DomainCouponInstance;
 exports.DomainCouponConsumption = DomainCouponConsumption;
-
+exports.DomainArea = DomainArea;
+exports.DomainShop = DomainShop;
+exports.DomainCouponStrategy = DomainCouponStrategy;

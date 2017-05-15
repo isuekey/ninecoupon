@@ -17,6 +17,12 @@ app.oauth = oauthserver({
     debug: true
 });
 
+app.all('/*', function(req, res, next){
+   res.header("Access-Control-Allow-Origin", "*");
+   res.header("Access-Control-Allow-Headers", "X-Requested-With");
+   res.header("Access-Control-Allow-Methods", "GET, POST","PUT");
+   next();
+});
 
 // Handle token grant requests
 app.all('/oauth/token', app.oauth.grant());
@@ -30,22 +36,25 @@ app.get('/consumption/shop/:shopId/clerk/list',app.oauth.authorise(), controller
 app.delete('/consumption/clerk/:clerkId', app.oauth.authorise(), controllerConsumption.deleteMyClerk);
 app.post("/consumption/clerk", app.oauth.authorise(), controllerConsumption.addMyClerk);
 app.get("/consumption/shop/:shopId/writeoff/list", app.oauth.authorise(), controllerConsumption.queryMyWriteOffInTheShop);
-app.post("/consumption/writeoff/coupon", app.oauth.authorise(), controllerConsumption.writeoffCoupon);
+app.post("/consumption/writeoff/coupon", app.oauth.authorise(), controllerConsumption.writeOffCoupon);
 
 app.get("/ninecoupon/shop/list", app.oauth.authorise(), controllerCoupon.queryMyShopList);
-app.get("/ninecoupon/shop/:shopId/strategy/list", app.oauth.authorise(), controllerCoupon.queryStrategyList);
-app.get("/ninecoupon/strategy/list", app.oauth.authorise(), controllerCoupon.queryDefaultShopStrategyList);
+app.get("/ninecoupon/shop/work/list", app.oauth.authorise(), controllerCoupon.queryMyShopWorkList);
+app.get("/ninecoupon/shop/:shopId/strategy/list", app.oauth.authorise(), controllerCoupon.queryShopStrategyList);
+app.get("/ninecoupon/strategy/list", app.oauth.authorise(), controllerCoupon.queryStrategyList);
+app.post("/ninecoupon/strategy", app.oauth.authorise(), controllerCoupon.addNewStrategy);
+app.post("/ninecoupon/strategy/access", app.oauth.authorise(), controllerCoupon.addNewStrategyAccess);
 app.post("/ninecoupon/template/create", app.oauth.authorise(), controllerCoupon.generateTemplateByStrategy);
 app.get("/ninecoupon/shop/:shopId/template/list", app.oauth.authorise(), controllerCoupon.queryShopTemplateList);
 app.put("/ninecoupon/template/:templateId/publish", app.oauth.authorise(), controllerCoupon.publishShopTemplate);
 app.get("/ninecoupon/coupon/list", app.oauth.authorise(), controllerCoupon.queryUserCoupon);
-app.get("/ninecoupon/coupon/wifi/:areaId", app.oauth.authorise(), controllerCoupon.randomAreaCoupon);
+app.get("/ninecoupon/coupon/wifi/:areaIndex", controllerCoupon.randomAreaCoupon);
 app.post("/ninecoupon/coupon", app.oauth.authorise(), controllerCoupon.receiveCoupon);
 
-
-app.get('/p/:tagId', function(req, res) {
-  res.send("tagId is set to " + req.params.tagId);
-});
+app.get('/ninecoupon/area/list', app.oauth.authorise(), controllerCoupon.queryAreaList);
+app.post('/ninecoupon/area', app.oauth.authorise(), controllerCoupon.addNewArea);
+app.get('/ninecoupon/area/:areaIndex/shop/list', app.oauth.authorise(), controllerCoupon.queryShopOfTheArea);
+app.post('/ninecoupon/area/:areaIndex/shop', app.oauth.authorise(), controllerCoupon.addNewShopOfTheArea);
 
 app.get('/oauth/authorise', app.oauth.authorise(), function (req, res) {
     // Will require a valid access_token
