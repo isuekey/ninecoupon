@@ -30,6 +30,13 @@ app.all('/oauth/token', app.oauth.grant());
 app.post('/ninecoupon/signup', controllerAccount.createAccount);
 app.post('/ninecoupon/anonymous', controllerAccount.anonymousAccount);
 app.get('/ninecoupon/account', app.oauth.authorise(), controllerAccount.getAccount);
+app.delete('/ninecoupon/account/:account', app.oauth.authorise(), controllerAccount.deleteAccount);
+
+//管理
+app.get('/ninecoupon/area/list', app.oauth.authorise(), controllerCoupon.queryAreaList);
+app.post('/ninecoupon/area', app.oauth.authorise(), controllerCoupon.addNewArea);
+app.get('/ninecoupon/area/:areaIndex/shop/list', app.oauth.authorise(), controllerCoupon.queryShopOfTheArea);
+app.post('/ninecoupon/area/:areaIndex/shop', app.oauth.authorise(), controllerCoupon.addNewShopOfTheArea);
 
 app.get('/consumption/clerk/list',app.oauth.authorise(), controllerConsumption.queryMyClerkList);
 app.get('/consumption/shop/:shopId/clerk/list',app.oauth.authorise(), controllerConsumption.queryMyClerkListInTheShop);
@@ -51,11 +58,6 @@ app.get("/ninecoupon/coupon/list", app.oauth.authorise(), controllerCoupon.query
 app.get("/ninecoupon/coupon/wifi/:areaIndex", controllerCoupon.randomAreaCoupon);
 app.post("/ninecoupon/coupon", app.oauth.authorise(), controllerCoupon.receiveCoupon);
 
-app.get('/ninecoupon/area/list', app.oauth.authorise(), controllerCoupon.queryAreaList);
-app.post('/ninecoupon/area', app.oauth.authorise(), controllerCoupon.addNewArea);
-app.get('/ninecoupon/area/:areaIndex/shop/list', app.oauth.authorise(), controllerCoupon.queryShopOfTheArea);
-app.post('/ninecoupon/area/:areaIndex/shop', app.oauth.authorise(), controllerCoupon.addNewShopOfTheArea);
-
 app.get('/oauth/authorise', app.oauth.authorise(), function (req, res) {
     // Will require a valid access_token
     res.send('Secret area');
@@ -72,6 +74,8 @@ app.use(app.oauth.errorHandler());
 var port = process.env.PORT || 10010;
 app.listen(port);
 
+// for test
+module.exports = app;
 
 /**
 *** TODO ninecoupon/strategy/list

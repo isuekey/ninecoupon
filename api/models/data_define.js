@@ -62,7 +62,17 @@ DomainAccount.signUpAccount = function signUpAccount(newAccount){
                 where:{
                     account:newAccount.account
                 },
-                defaults: newAccount
+                defaults: {
+                    account: newAccount.account,
+                    password: newAccount.password,
+                    accountName: newAccount.accountName || newAccount.account,
+                    status: newAccount.status || 'enabled',
+                    accountType: newAccount.accountType || 0,
+                    promoter: newAccount.promoter,
+                    gender: newAccount.gender,
+                    avatar: newAccount.avatar,
+                    phone: newAccount.phone
+                }
             });
         });
     
@@ -80,6 +90,17 @@ DomainAccount.testPhoneExist = function testPhoneExist(phone){
             phone:phone
         }
     });
+};
+DomainAccount.deleteAccountFromRedis = function deleteAccountFromRedis(account){
+    let userKey = redisKey(formats.user, account);
+    return redis.delAsync(userKey)
+        .then((deled)=>{
+            return this.update({status:"disabled"},{
+                where:{
+                    account
+                }
+            });
+        });
 };
 
 
@@ -182,8 +203,9 @@ DomainArea.randomAreaCoupon = function randomAreaCoupon(authUser, areaIndex){
     let sql = `select template.id, template.coupon_template_name as templateName, template.data,
         template.strategy_id as strategyId,
         template.shop_id as shopId,
-        template.origin as orign,
-        shop.shop_name as shopName
+        template.origin as origin,
+        shop.shop_name as shopName,
+        shop.shop_address as shopAddress
     from t_shop as shop, t_coupon_template as template
     where shop.area_index = '${areaIndex}' and shop.id = template.shop_id
     and template.status = 'enabled'
@@ -215,7 +237,7 @@ DomainArea.addNewArea = function addNewArea(areaInfo){
         defaults:{
             name: areaInfo.name,
             areaIndex: areaInfo.areaIndex,
-            status: areaInfo.status,
+            status: areaInfo.status || 'enabled',
             latitude: areaInfo.latitude,
             longitude: areaInfo.longitude
         }
@@ -477,40 +499,57 @@ var DomainCouponInstance = sequelize.define("t_coupon_instance", {
         type:Sequelize.BIGINT,
         field:"shop_id"
     },
+    shopName:{
+        type:Sequelize.STRING,
+        field:"shop_name"
+    },
+    shopAddress:{
+        type:Sequelize.STRING,
+        field:"shop_address"
+    },
     randomId:{
         type:Sequelize.INTEGER,
         field:"random_id"
+    },
+    origin:{
+        type:Sequelize.STRING
     }
 });
 
 DomainCouponInstance.queryUserCoupon = function queryUserCoupon(authUser){
-    return this.findAll({
-        where:{
-            account: authUser.id
-        }
-    }).then( (arrayInstance)=>{
-        return arrayInstance.map((ele) =>{
-            return ele.toJSON();
-        });
+    return this.findAll({where:{
+        status:"enabled",
+        account: authUser.id
+    }}).then((arrayInstance)=>{
+        return arrayInstance.map((ele)=>ele.toJSON());
     });
 };
 
 DomainCouponInstance.generateCouponFromTemplate = function generateCouponFromTemplate(authUser, couponTemplate){
+    console.log(couponTemplate);
     return this.findOrCreate({
         where:{
             account: authUser.id,
             randomId: couponTemplate.randomId,
-            templateId: couponTemplate.templateId
+            templateId: couponTemplate.id
         },
         defaults:{
-            name: couponTemplate.name,
+            name: couponTemplate.templatename,
             data: couponTemplate.data,
             account: authUser.id,
-            stauts: "enabled",
-            templateId: couponTemplate.templateId,
-            shopId: couponTemplate.shopId,
-            randomId: couponTemplate.randomId
+            status: "enabled",
+            templateId: couponTemplate.id,
+            shopId: couponTemplate.shopid,
+            shopName: couponTemplate.shopname,
+            shopAddress: couponTemplate.shopaddress,
+            randomId: couponTemplate.randomid,
+            origin: couponTemplate.origin
         }
+    });
+};
+DomainCouponInstance.consumeTheCouponInstance = function consumeTheCouponInstance(couponInstance){
+    return this.update({ status:"used" }, {
+        where:{ id: couponInstance.id }
     });
 };
 
@@ -563,12 +602,12 @@ DomainCouponConsumption.queryMyWriteOffInTheShop = function queryMyWriteOffInThe
 DomainCouponConsumption.writeOffCoupon = function writeOffCoupon(authUser, coupon){
     return this.findOrCreate({
         where:{
-            instanceId: coupon.instanceId
+            instanceId: coupon.id
         },
         defaults:{
-            instanceId: coupon.instanceId,
-            shopId: coupon.shopid,
-            consumer: coupon.consumer,
+            instanceId: coupon.id,
+            shopId: coupon.shopId,
+            consumer: coupon.account,
             clerk: authUser.id
         }
     });

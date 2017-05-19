@@ -39,6 +39,7 @@ create table if not exists t_area (
 create table if not exists t_shop (
    id bigserial primary key,
    shop_name varchar(400),
+   shop_address varchar(1000),
    owner_account_id integer,
    owner_account varchar(400),
    area_id integer,
@@ -92,6 +93,9 @@ create table if not exists t_coupon_instance (
    status varchar(40),
    template_id bigint,
    shop_id bigint,
+   shop_name varchar(400),
+   shop_name varchar(1000),
+   origin varchar(40),
    random_id integer,
    created_at timestamp default current_timestamp,
    updated_at timestamp
@@ -111,45 +115,6 @@ create table if not exists t_coupon_consumption (
     updated_at timestamp
 );
 
-
-
-
-create table if not exists t_organization (
-   id bigserial primary key,
-   organization_name varchar(400),
-   created_at timestamp default current_timestamp,
-   updated_at timestamp
-);
-
-create table if not exists t_mechanism (
-   id bigserial primary key,
-   mechanism_name varchar(400),
-   organization_id integer,
-   shop_id integer,
-   created_at timestamp default current_timestamp,
-   updated_at timestamp
-);
-
-create table if not exists t_category (
-   id bigserial primary key,
-   category_name varchar(400),
-   created_at timestamp default current_timestamp,
-   updated_at timestamp
-);
-
-
-create table if not exists t_coupon_template_instance (
-   id bigserial primary key,
-   coupon_template_instance_name varchar(400),
-   data json,
-   status varchar(40),
-   publish_type varchar(40),
-   template_id integer,
-   brand_id integer,
-   origin varchar(400),
-   created_at timestamp default current_timestamp,
-   updated_at timestamp
-);
 
 
 

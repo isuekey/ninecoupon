@@ -10,6 +10,7 @@ var DomainCouponInstance = require("../models/data_define").DomainCouponInstance
 var DomainArea = require("../models/data_define").DomainArea;
 
 module.exports = {
+    queryAreaList,
     queryStrategyList,
     addNewStrategy,
     addNewStrategyAccess,
@@ -21,11 +22,38 @@ module.exports = {
     queryUserCoupon,
     randomAreaCoupon,
     receiveCoupon,
-    queryAreaList,
     addNewArea,
     queryShopOfTheArea,
     addNewShopOfTheArea,
     queryMyShopWorkList
+};
+/**
+ * 获取区域列表
+ * 以后会接收参数 区域名称%，区域索引%, page, step
+ */
+function queryAreaList(req, res){
+    DomainArea.queryAreaList().then( arrayJson =>{
+        res.json(arrayJson);
+    }).catch( (error)=>{
+        res.status(500);
+        res.json({
+            code: 1300,
+            message: "系统错误"
+        });
+    });
+};
+
+function addNewArea(req, res){
+    let areaInfo = req.body;
+    DomainArea.addNewArea(areaInfo).then( (arrayJson, created)=>{
+        res.json(arrayJson[0].toJSON());
+    }).catch( (error)=>{
+        res.status(500);
+        res.json({
+            code: 1300,
+            message: "系统错误"
+        });
+    });
 };
 
 /**
@@ -175,31 +203,6 @@ function randomAreaCoupon(req, res){
     let areaIndex = req.params.areaIndex;
     DomainArea.randomAreaCoupon(authUser, areaIndex).then( arrayJson =>{
         res.json(arrayJson);
-    }).catch( (error)=>{
-        res.status(500);
-        res.json({
-            code: 1300,
-            message: "系统错误"
-        });
-    });
-};
-
-function queryAreaList(req, res){
-    DomainArea.queryAreaList().then( arrayJson =>{
-        res.json(arrayJson);
-    }).catch( (error)=>{
-        res.status(500);
-        res.json({
-            code: 1300,
-            message: "系统错误"
-        });
-    });
-};
-
-function addNewArea(req, res){
-    let areaInfo = req.body;
-    DomainArea.addNewArea(areaInfo).then( (arrayJson, created)=>{
-        res.json(arrayJson[0].toJSON());
     }).catch( (error)=>{
         res.status(500);
         res.json({

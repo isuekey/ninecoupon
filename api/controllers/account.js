@@ -8,7 +8,8 @@ var DomainAccount = require("../models/data_define").DomainAccount;
 module.exports = {
     createAccount: createAccount,
     anonymousAccount: anonymousAccount,
-    getAccount
+    getAccount,
+    deleteAccount
 };
 
 /**
@@ -50,6 +51,33 @@ function createAccount(req, res){
             }
         });
 }
+function deleteAccount(req, res){
+    let authUser = req.user;
+    let account = req.params.account;
+    DomainAccount.getAccountInfo(authUser)
+        .then((accountInfo)=>{
+            if(accountInfo && accountInfo.accountType && accountInfo.accountType >= 1000){
+                DomainAccount.deleteAccountFromRedis(account)
+                    .then((deled)=>{
+                        res.status(200);
+                        res.json({
+                            code: 0,
+                            message: "删除用户",
+                            account,
+                            deleted: deled[0]
+                        });
+                    });
+            }else{
+                res.status(200);
+                res.json({
+                    code: 1102,
+                    message: "用户授权权限不足",
+                    account
+                });
+            }
+        });
+    
+};
 /**
  * anonymous account sign up
  * req body { account:string, password:string}

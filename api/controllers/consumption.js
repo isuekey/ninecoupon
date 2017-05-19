@@ -4,6 +4,7 @@ var util = require("util");
 var DomainCouponConsumption = require("../models/data_define").DomainCouponConsumption;
 var DomainAccountRelation = require("../models/data_define").DomainAccountRelation;
 var DomainAccount = require("../models/data_define").DomainAccount;
+var DomainCouponInstance = require("../models/data_define").DomainCouponInstance;
 
 module.exports = {
     queryMyClerkList,
@@ -56,7 +57,7 @@ function queryMyClerkListInTheShop(req, res){
             message: "系统错误"
         });
     });
-}
+};
 
 function deleteMyClerk(req, res){
     let authUser = req.user;
@@ -94,7 +95,7 @@ function addMyClerk(req, res){
                         .then( (instance, created)=>{
                             let inst = instance[0];
                             if(!created){
-                                inst.set("status","enabled");
+                                inst.set("status", "enabled");
                                 return inst.save();
                             }else{
                                 return inst;
@@ -131,18 +132,20 @@ function queryMyWriteOffInTheShop(req, res){
 function writeOffCoupon(req, res){
     let authUser = req.user;
     let coupon = req.body;
-    DomainCouponConsumption.writeOffCoupon(authUser, coupon).then((arrayInstance, created)=>{
-        console.log(created);
-        if(created){
-            res.json({
-                code:0,
-                message:"核销成功",
-                consumption: arrayInstance[0].toJSON()
+    DomainCouponConsumption.writeOffCoupon(authUser, coupon).then((arrayInstance)=>{
+        if(arrayInstance[1]){
+            DomainCouponInstance.consumeTheCouponInstance(coupon).then((result)=>{
+                res.json({
+                    code:0,
+                    message:"核销成功",
+                    consumption: arrayInstance[0].toJSON()
+                });
             });
         }else{
             res.json({
                 code:1600,
-                message:"优惠券已经使用"
+                message:"优惠券已经使用",
+                consumption: arrayInstance[0].toJSON()
             });
         }
     }).catch( (error) =>{
