@@ -94,7 +94,7 @@ create table if not exists t_coupon_instance (
    template_id bigint,
    shop_id bigint,
    shop_name varchar(400),
-   shop_name varchar(1000),
+   shop_address varchar(1000),
    origin varchar(40),
    random_id integer,
    created_at timestamp default current_timestamp,
@@ -131,7 +131,5 @@ insert into t_account ( account, account_name, phone, gender, avatar, status, ac
 insert into t_account ( account, account_name, phone, gender, avatar, status, account_type) values ('customer','customer', '13718961121', 0, null, 'enabled', 0 );
 insert into t_account ( account, account_name, phone, gender, avatar, status, account_type) values ('liuhanru','liuhanru', '13718961122', 1, null, 'enabled', 0 );
 
-insert into t_coupon_template (coupon_template_name, data, status, origin) values ('discounted','{"name":"全场打折卡", "discount":1}', 'enabled','suyuan');
 
-
-insert into t_coupon_template_instance (coupon_template_instance_name, data, status, publish_type,  template_id, brand_id, origin) values ('discounted', '{"name":"双安商场全场9折", "discount":0.9, "brandName":"双安商场","count":5}','enabled', 'ninecoupon', 1, 1, 'suyuan');
+    

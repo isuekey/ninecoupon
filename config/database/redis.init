@@ -1,30 +1,26 @@
-HMSET "clients:c9abdba79a013827bb66cf4bad8a846c" "clientId" "c9abdba79a013827bb66cf4bad8a846c" "clientSecret" "1f3e8ee63ccde44d62a4ab860d658a23"
-SADD "clients:c9abdba79a013827bb66cf4bad8a846c:grant_types" "password" "refresh_token"
+
+
+
+hmset "clients:ninecouponAdmin" clientId ninecouponAdmin clientSecret c9654199366985
+SADD "clients:ninecouponAdmin:grant_types" "password" "refresh_token"
+
+hmset "clients:ninecouponWifi" clientId ninecouponWifi clientSecret 9a013827bb66
+SADD "clients:ninecouponWifi:grant_types" "password" "refresh_token"
+
+hmset "clients:ninecouponConsumption" clientId ninecouponConsumption clientSecret 13827bb66cf4ba
+SADD "clients:ninecouponConsumption:grant_types" "password" "refresh_token"
+
+
+
 HMSET "users:admin" id admin username administrator password 123456
 HMSET "users:liuhanru" id liuhanru username liuhanru password 123456
-HMSET "users:cuipeng" id cuipeng username cuipeng password 123456
 
-db.multi()
-  .hmset('users:username', {
-    id: 'username',
-    username: 'username',
-    password: 'password'
-  })
-  .hmset('clients:client', {
-    clientId: 'client',
-    clientSecret: 'secret'
-  })
-  .sadd('clients:client:grant_types', [
-    'password',
-    'refresh_token'
-  ])
-  .exec(function (errs) {
-    if (errs) {
-      console.error(errs[0].message);
-      return process.exit(1);
-    }
 
-    console.log('Client and user added successfully');
-    process.exit();
-  });
+ninecouponAdmin:c9654199366985
+bmluZWNvdXBvbkFkbWluOmM5NjU0MTk5MzY2OTg1
 
+ninecouponWifi:9a013827bb66
+bmluZWNvdXBvbldpZmk6OWEwMTM4MjdiYjY2
+
+ninecouponConsumption:13827bb66cf4ba
+bmluZWNvdXBvbkNvbnN1bXB0aW9uOjEzODI3YmI2NmNmNGJh
